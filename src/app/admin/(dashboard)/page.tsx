@@ -2,12 +2,13 @@ import { Download } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { cn } from "@/lib/utils";
+import { FilterBar } from "@/features/admin/filter-bar";
 import { requireAdminPage } from "@/server/auth";
 import {
   ADMIN_PAGE_SIZE, getAdminPhotoUrls, getAdminStats, listAdminReports, parseAdminFilters,
   type AdminListFilters, type AdminView,
 } from "@/server/services/admin";
-import { REPORT_STATUSES, SIDO_LIST } from "@/shared/constants";
+import { REPORT_STATUSES } from "@/shared/constants";
 import { formatDate } from "@/shared/format";
 import type { AdminReport } from "@/shared/types";
 
@@ -108,26 +109,8 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
         ))}
       </nav>
 
-      <form action="/admin" className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-        {f.view !== "all" && <input type="hidden" name="view" value={f.view} />}
-        <input name="q" defaultValue={f.q} placeholder="주소·조회번호·시군구 검색"
-          className="col-span-2 h-10 rounded-lg border bg-white px-3 text-base outline-none focus:border-primary sm:min-w-56 sm:flex-1 sm:text-sm" />
-        <select name="sido" defaultValue={f.sido ?? ""} className="h-10 rounded-lg border bg-white px-2 text-sm">
-          <option value="">전체 지역</option>
-          {SIDO_LIST.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
-        </select>
-        <select name="status" defaultValue={f.status ?? ""} className="h-10 rounded-lg border bg-white px-2 text-sm">
-          <option value="">전체 상태</option>
-          {Object.entries(REPORT_STATUSES).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-        </select>
-        <button className="col-span-2 h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-white sm:col-span-1">검색</button>
-        {(f.q || f.sido || f.status) && (
-          <Link href={`/admin${query(f, { q: undefined, sido: undefined, status: undefined, page: 1 })}`}
-            className="col-span-2 text-center text-sm text-muted-foreground underline sm:col-span-1">
-            초기화
-          </Link>
-        )}
-      </form>
+      {/* key: remount when the URL changes so the search box reflects it */}
+      <FilterBar key={query(f, { page: undefined })} filters={f} />
 
       <div className="mt-4 mb-2 flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">{count.toLocaleString()}건</p>

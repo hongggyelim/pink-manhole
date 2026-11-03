@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MAX_PHOTOS } from "@/shared/constants";
 import type { ProcessedPhoto } from "./image";
 
@@ -47,6 +47,13 @@ export function ReportDraftProvider({ children }: { children: ReactNode }) {
     });
     setLocation(null);
   }, []);
+
+  // Revoke preview URLs when the wizard unmounts (e.g. after a successful submit).
+  const photosRef = useRef(photos);
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
+  useEffect(() => () => photosRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl)), []);
 
   // Warn before leaving the page with unsaved photos.
   useEffect(() => {

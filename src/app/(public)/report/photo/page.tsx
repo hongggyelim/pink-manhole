@@ -1,9 +1,10 @@
 "use client";
 
-import { Camera, Plus, X } from "lucide-react";
+import { Camera, ImageIcon, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { CameraDialog } from "@/features/report-form/camera-dialog";
 import { processPhoto } from "@/features/report-form/image";
 import { PrimaryButton } from "@/features/report-form/primary-button";
 import { useReportDraft } from "@/features/report-form/report-draft";
@@ -14,12 +15,15 @@ export default function PhotoStep() {
   const router = useRouter();
   const { photos, addPhotos, removePhoto } = useReportDraft();
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const remaining = MAX_PHOTOS - photos.length;
 
-  async function onFiles(files: FileList | null) {
-    if (!files?.length) return;
+  async function onFiles(list: FileList | File[] | null) {
+    const files = list ? [...list] : [];
+    if (!files.length) return;
     setError(null);
     setBusy(true);
     try {
@@ -31,7 +35,14 @@ export default function PhotoStep() {
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
     }
+  }
+
+  // Phones/tablets: the OS camera app via <input capture>. Desktop: in-page webcam dialog.
+  function openCamera() {
+    if (window.matchMedia("(pointer: coarse)").matches) cameraInputRef.current?.click();
+    else setCameraOpen(true);
   }
 
   return (
@@ -46,21 +57,42 @@ export default function PhotoStep() {
         hidden
         onChange={(e) => onFiles(e.target.files)}
       />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => onFiles(e.target.files)}
+      />
 
       <div className="flex-1 px-5">
-        <button
-          type="button"
-          disabled={remaining === 0 || busy}
-          onClick={() => inputRef.current?.click()}
-          className="flex w-full flex-col items-center rounded-2xl border-2 border-dashed border-primary/40 bg-pink-soft/50 px-6 py-12 text-center disabled:opacity-60"
-        >
-          <Camera className="size-9 text-primary" />
+        <div className="rounded-2xl border-2 border-dashed border-primary/40 bg-pink-soft/50 px-5 pt-8 pb-5 text-center">
+          <Camera className="mx-auto size-9 text-primary" />
           <p className="mt-3 text-lg font-bold">{busy ? "사진 처리 중…" : "사진을 업로드해주세요"}</p>
           <p className="mt-1.5 text-sm text-muted-foreground">
             분홍색 맨홀을 촬영한 사진을 올려주세요.
             <br />(최대 {MAX_PHOTOS}장까지)
           </p>
-        </button>
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              disabled={remaining === 0 || busy}
+              onClick={openCamera}
+              className="flex h-12 items-center justify-center gap-1.5 rounded-xl bg-primary font-semibold text-white disabled:opacity-50"
+            >
+              <Camera className="size-5" /> 카메라로 촬영
+            </button>
+            <button
+              type="button"
+              disabled={remaining === 0 || busy}
+              onClick={() => inputRef.current?.click()}
+              className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-white font-semibold text-primary disabled:opacity-50"
+            >
+              <ImageIcon className="size-5" /> 앨범에서 선택
+            </button>
+          </div>
+        </div>
 
         <div className="mt-5 grid grid-cols-3 gap-3">
           {photos.map((p) => (
@@ -91,6 +123,14 @@ export default function PhotoStep() {
           사진은 관리자 검토 전까지 흐리게 공개되고, 승인 후 원본이 공개돼요. 사람 얼굴이나 차량 번호판이 나오지 않게 촬영해주세요. (JPG·PNG·WebP, 장당 10MB 이하)
         </p>
       </div>
+
+      {cameraOpen && (
+        <CameraDialog
+          remaining={remaining}
+          onCapture={(file) => onFiles([file])}
+          onClose={() => setCameraOpen(false)}
+        />
+      )}
 
       <div className="p-5">
         <PrimaryButton disabled={photos.length === 0 || busy} onClick={() => router.push("/report/location")}>

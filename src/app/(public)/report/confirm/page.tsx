@@ -20,7 +20,7 @@ type SignResponse = {
 export default function ConfirmStep() {
   const router = useRouter();
   const ready = useRequireStep("confirm");
-  const { photos, location, reset } = useReportDraft();
+  const { photos, location } = useReportDraft();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Keep the uploaded draft so a retry after a failed create skips re-uploading.
@@ -74,7 +74,9 @@ export default function ConfirmStep() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "제보 등록에 실패했어요.");
-      reset();
+      // Don't reset() here: emptying the draft would trigger useRequireStep's redirect to
+      // /report/photo and override this navigation. Leaving /report unmounts the draft
+      // provider, which discards the state (and revokes preview URLs) on its own.
       router.replace("/home?submitted=1");
     } catch (e) {
       setError((e as Error).message || "제보 등록에 실패했어요.");
