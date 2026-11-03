@@ -1,0 +1,94 @@
+import { MapPin } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { PageHeader } from "@/components/layout/page-header";
+import { CopyButton } from "@/features/reports/copy-button";
+import { ReportDetailMap } from "@/features/reports/report-detail-map";
+import { StatusText } from "@/features/reports/report-list-item";
+import { countNearby, getReportByNo } from "@/server/services/reports";
+import { formatDate } from "@/shared/format";
+import { photoUrl } from "@/shared/photo";
+import { reportNoSchema } from "@/shared/schemas";
+
+export async function generateMetadata({ params }: PageProps<"/reports/[reportNo]">): Promise<Metadata> {
+  const { reportNo } = await params;
+  const report = reportNoSchema.safeParse(reportNo).success ? await getReportByNo(reportNo) : null;
+  if (!report) return { title: "제보를 찾을 수 없어요" };
+  const thumb = report.report_photos[0]?.storage_path;
+  return {
+    title: report.road_address ?? report.address ?? "분홍맨홀 제보",
+    description: `분홍맨홀 제보 ${report.report_no}`,
+    openGraph: thumb ? { images: [photoUrl(thumb)] } : undefined,
+  };
+}
+
+export default function ReportDetailPage({ params }: PageProps<"/reports/[reportNo]">) {
+  return (
+    <main className="pb-10">
+      <PageHeader title="상세 위치 정보" />
+      <Suspense fallback={<div className="h-64 bg-[#eef1f4]" />}>
+        <Detail params={params} />
+      </Suspense>
+    </main>
+  );
+}
+
+async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["params"] }) {
+  const { reportNo } = await params;
+  if (!reportNoSchema.safeParse(reportNo).success) notFound();
+  const report = await getReportByNo(reportNo);
+  if (!report) notFound();
+  const nearby = await countNearby(report.lat, report.lng);
+
+  return (
+    <>
+      <ReportDetailMap id={report.id} reportNo={report.report_no} lat={report.lat} lng={report.lng} />
+
+      <div className="grid grid-cols-3 gap-2 px-4 pt-4">
+        {report.report_photos.map((p, i) => (
+          <a key={p.storage_path} href={photoUrl(p.storage_path)} target="_blank" rel="noreferrer"
+            className="aspect-square overflow-hidden rounded-xl bg-muted">
+            <img src={photoUrl(p.thumb_path)} alt={`제보 사진 ${i + 1}`} className="size-full object-cover" />
+          </a>
+        ))}
+      </div>
+
+      <section className="px-4 pt-4">
+        <p className="flex items-start gap-1.5 text-[17px] font-bold">
+          <MapPin className="mt-0.5 size-5 shrink-0 fill-primary text-primary [&>circle]:fill-white [&>circle]:stroke-white" />
+          {report.road_address ?? report.address ?? "주소 정보 없음"}
+        </p>
+        {report.road_address && report.address && (
+          <p className="mt-1 pl-6.5 text-sm text-muted-foreground">{report.address}</p>
+        )}
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          <span className="rounded-full bg-muted px-2.5 py-1">사용자 제보</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">{formatDate(report.created_at)}</span>
+          <span className="rounded-full bg-pink-soft px-2.5 py-1 font-semibold"><StatusText status={report.status} /></span>
+        </div>
+        <div className="mt-4 flex items-center justify-between rounded-xl border px-4 py-3 text-sm">
+          <span className="text-muted-foreground">조회번호</span>
+          <span className="flex items-center gap-1 font-mono font-semibold">
+            {report.report_no}
+            <CopyButton text={report.report_no} />
+          </span>
+        </div>
+      </section>
+
+      <div className="mt-6 h-2 bg-muted" />
+
+      <section className="px-4 pt-5">
+        <h2 className="text-lg font-bold">주변 신고 현황</h2>
+        <p className="mt-1 text-sm text-muted-foreground">이 위치에서 총 {nearby}건의 제보가 접수되었어요.</p>
+        <Link
+          href={`/map?lat=${report.lat}&lng=${report.lng}`}
+          className="mt-4 flex h-12 items-center justify-center rounded-xl bg-pink-soft font-semibold text-primary"
+        >
+          유사한 위치 보기
+        </Link>
+      </section>
+    </>
+  );
+}
