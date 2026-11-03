@@ -41,7 +41,7 @@ export default function PhotoStep() {
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
         multiple
         hidden
         onChange={(e) => onFiles(e.target.files)}
@@ -88,7 +88,7 @@ export default function PhotoStep() {
 
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
         <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-          사진은 모든 이용자에게 공개돼요. 사람 얼굴이나 차량 번호판이 나오지 않게 촬영해주세요.
+          사진은 관리자 검토 전까지 흐리게 공개되고, 승인 후 원본이 공개돼요. 사람 얼굴이나 차량 번호판이 나오지 않게 촬영해주세요. (JPG·PNG·WebP, 장당 10MB 이하)
         </p>
       </div>
 

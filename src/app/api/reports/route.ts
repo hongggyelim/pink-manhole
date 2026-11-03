@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createReportSchema } from "@/shared/schemas";
 import { clientIp, hashIp, isRateLimited } from "@/server/services/abuse";
-import { createReport, ReportError } from "@/server/services/reports";
+import { PhotoError } from "@/server/services/photo-files";
+import { createReport } from "@/server/services/reports";
 
 export async function POST(req: NextRequest) {
   const parsed = createReportSchema.safeParse(await req.json().catch(() => null));
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ reportNo }, { status: 201 });
   } catch (e) {
-    if (e instanceof ReportError) {
+    if (e instanceof PhotoError) {
       return NextResponse.json({ error: e.message }, { status: 400 });
     }
     console.error("createReport failed", e);

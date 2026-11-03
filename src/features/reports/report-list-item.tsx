@@ -1,30 +1,45 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { REPORT_STATUSES } from "@/shared/constants";
 import { formatDate } from "@/shared/format";
-import { photoUrl } from "@/shared/photo";
+import { publicPhoto } from "@/shared/photo";
 import type { PublicReport } from "@/shared/types";
 
 export function ReportListItem({ report }: { report: PublicReport }) {
-  const thumb = report.report_photos[0]?.thumb_path;
+  const first = report.report_photos[0];
+  const photo = first ? publicPhoto(first) : null;
   return (
     <Link href={`/reports/${report.report_no}`} className="flex items-center gap-3 py-3">
-      <div className="size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
-        {thumb && <img src={photoUrl(thumb)} alt="" className="size-full object-cover" loading="lazy" />}
+      <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+        {photo?.thumb && <img src={photo.thumb} alt="" className="size-full object-cover" loading="lazy" />}
+        {photo?.blurred && (
+          <span className="absolute inset-x-0 bottom-0 bg-black/45 py-0.5 text-center text-[10px] text-white">검토중</span>
+        )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-semibold">
-          {report.road_address ?? report.address ?? "주소 정보 없음"}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {formatDate(report.created_at)} · <StatusText status={report.status} />
+        <p className="truncate text-[15px] font-semibold">{report.road_address ?? report.address ?? "주소 정보 없음"}</p>
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <StatusBadge status={report.status} />
+          {report.sigungu && <span>{report.sido} {report.sigungu}</span>}
+          <span>· {formatDate(report.created_at)}</span>
         </p>
       </div>
-      <ChevronRight className="size-4 text-muted-foreground" />
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
     </Link>
   );
 }
 
-export function StatusText({ status }: { status: PublicReport["status"] }) {
-  return <span className={status === "resolved" ? "text-emerald-600" : "text-primary"}>{REPORT_STATUSES[status]}</span>;
+const STATUS_STYLE: Record<PublicReport["status"], string> = {
+  reviewing: "bg-amber-50 text-amber-700",
+  registered: "bg-pink-soft text-primary",
+  submitted: "bg-emerald-50 text-emerald-700",
+};
+
+export function StatusBadge({ status }: { status: PublicReport["status"] }) {
+  return (
+    <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", STATUS_STYLE[status])}>
+      {REPORT_STATUSES[status]}
+    </span>
+  );
 }

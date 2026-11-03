@@ -10,10 +10,9 @@ import { useReportDraft } from "@/features/report-form/report-draft";
 import { Stepper } from "@/features/report-form/stepper";
 import { useRequireStep } from "@/features/report-form/use-require-step";
 import { createClient } from "@/lib/supabase/client";
-import { PHOTO_BUCKET } from "@/shared/constants";
+import { UPLOAD_BUCKET } from "@/shared/constants";
 
-type UploadTarget = { path: string; token: string };
-type SignResponse = { draftId: string; uploads: { full: UploadTarget; thumb: UploadTarget }[] };
+type SignResponse = { draftId: string; uploads: { path: string; token: string }[] };
 
 export default function ConfirmStep() {
   const router = useRouter();
@@ -39,13 +38,12 @@ export default function ConfirmStep() {
         const sign = await signRes.json();
         if (!signRes.ok) throw new Error(sign.error ?? "업로드 준비에 실패했어요.");
         const { draftId: id, uploads } = sign as SignResponse;
-        const storage = createClient().storage.from(PHOTO_BUCKET);
+        const storage = createClient().storage.from(UPLOAD_BUCKET);
         await Promise.all(
-          uploads.flatMap((u, i) => [
-            storage.uploadToSignedUrl(u.full.path, u.full.token, photos[i].full, { contentType: "image/jpeg" }),
-            storage.uploadToSignedUrl(u.thumb.path, u.thumb.token, photos[i].thumb, { contentType: "image/jpeg" }),
-          ]).map(async (p) => {
-            const { error } = await p;
+          uploads.map(async (u, i) => {
+            const { error } = await storage.uploadToSignedUrl(u.path, u.token, photos[i].full, {
+              contentType: "image/jpeg",
+            });
             if (error) throw new Error("사진 업로드에 실패했어요. 네트워크를 확인해주세요.");
           }),
         );
@@ -59,13 +57,13 @@ export default function ConfirmStep() {
           draftId,
           lat: location.lat,
           lng: location.lng,
-          photos: photos.map((p) => ({ width: p.width, height: p.height })),
+          photoCount: photos.length,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "제보 등록에 실패했어요.");
       reset();
-      router.replace(`/report/complete?no=${encodeURIComponent(data.reportNo)}`);
+      router.replace("/home?submitted=1");
     } catch (e) {
       setError((e as Error).message || "제보 등록에 실패했어요.");
       setSubmitting(false);
@@ -93,8 +91,8 @@ export default function ConfirmStep() {
         <div className="flex gap-3 rounded-2xl bg-muted p-5 text-sm leading-relaxed text-muted-foreground">
           <Info className="mt-0.5 size-5 shrink-0" />
           <p>
-            제보한 내용은 바로 지도에 공개돼요. 제보자의 개인정보는 공개되지 않으며, 부적절한 제보는 관리자가 숨길 수
-            있어요.
+            제보는 바로 등록돼요. 사진은 관리자 검토 전까지 흐리게 표시되고, 승인 후 공개돼요. 제보자의 개인정보는
+            공개되지 않아요.
           </p>
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}

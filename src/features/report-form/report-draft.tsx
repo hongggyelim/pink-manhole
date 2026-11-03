@@ -27,7 +27,7 @@ export function ReportDraftProvider({ children }: { children: ReactNode }) {
     setPhotos((prev) => [
       ...prev,
       ...list.slice(0, MAX_PHOTOS - prev.length).map((p) => ({
-        ...p, id: crypto.randomUUID(), previewUrl: URL.createObjectURL(p.thumb),
+        ...p, id: crypto.randomUUID(), previewUrl: URL.createObjectURL(p.full),
       })),
     ]);
   }, []);

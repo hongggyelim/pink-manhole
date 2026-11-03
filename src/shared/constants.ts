@@ -1,15 +1,19 @@
 export const MAX_PHOTOS = 3;
-export const PHOTO_MAX_BYTES = 2 * 1024 * 1024; // after client-side compression
+/** Max size of a picked file (before client-side compression). */
+export const PHOTO_INPUT_MAX_BYTES = 10 * 1024 * 1024;
+/** Target size of the compressed upload. */
+export const PHOTO_MAX_BYTES = 2 * 1024 * 1024;
+/** Public bucket: only blur previews of pending photos + approved photos of visible reports. */
 export const PHOTO_BUCKET = "report-photos";
+/** Private bucket: originals and everything not currently allowed to be public. */
+export const UPLOAD_BUCKET = "report-uploads";
 export const MEMO_MAX_LENGTH = 200;
 
 /** Must match the `report_status` enum in supabase/migrations. */
 export const REPORT_STATUSES = {
-  received: "접수",
-  reviewing: "확인 중",
-  submitted: "민원 제출",
-  resolved: "처리 완료",
-  rejected: "반려",
+  reviewing: "검토중",
+  registered: "등록",
+  submitted: "민원 접수",
 } as const;
 export type ReportStatus = keyof typeof REPORT_STATUSES;
 
@@ -36,3 +40,15 @@ export const SIDO_LIST = [
   { name: "경남", match: "경남", lat: 35.4606, lng: 128.2132, level: 10 },
   { name: "제주", match: "제주", lat: 33.4996, lng: 126.5312, level: 10 },
 ] as const;
+
+/** Must match the `photo_moderation` enum. */
+export const PHOTO_MODERATION = {
+  pending: "검토 대기",
+  approved: "승인",
+  private: "비공개",
+} as const;
+export type PhotoModeration = keyof typeof PHOTO_MODERATION;
+
+/** Columns for public report reads (RLS hides private photos / hidden / deleted reports). */
+export const PUBLIC_REPORT_COLUMNS =
+  "id, report_no, status, lat, lng, address, road_address, sido, sigungu, created_at, report_photos(id, storage_path, thumb_path, blur_path, width, height, sort_order, moderation_status)";

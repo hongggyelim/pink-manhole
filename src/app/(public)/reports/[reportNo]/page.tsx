@@ -6,21 +6,21 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { CopyButton } from "@/features/reports/copy-button";
 import { ReportDetailMap } from "@/features/reports/report-detail-map";
-import { StatusText } from "@/features/reports/report-list-item";
+import { StatusBadge } from "@/features/reports/report-list-item";
 import { countNearby, getReportByNo } from "@/server/services/reports";
 import { formatDate } from "@/shared/format";
-import { photoUrl } from "@/shared/photo";
+import { photoUrl, publicPhoto } from "@/shared/photo";
 import { reportNoSchema } from "@/shared/schemas";
 
 export async function generateMetadata({ params }: PageProps<"/reports/[reportNo]">): Promise<Metadata> {
   const { reportNo } = await params;
   const report = reportNoSchema.safeParse(reportNo).success ? await getReportByNo(reportNo) : null;
   if (!report) return { title: "제보를 찾을 수 없어요" };
-  const thumb = report.report_photos[0]?.storage_path;
+  const approved = report.report_photos.find((p) => p.moderation_status === "approved");
   return {
     title: report.road_address ?? report.address ?? "분홍맨홀 제보",
     description: `분홍맨홀 제보 ${report.report_no}`,
-    openGraph: thumb ? { images: [photoUrl(thumb)] } : undefined,
+    openGraph: approved ? { images: [photoUrl(approved.storage_path)] } : undefined,
   };
 }
 
@@ -47,13 +47,29 @@ async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["pa
       <ReportDetailMap id={report.id} reportNo={report.report_no} lat={report.lat} lng={report.lng} />
 
       <div className="grid grid-cols-3 gap-2 px-4 pt-4">
-        {report.report_photos.map((p, i) => (
-          <a key={p.storage_path} href={photoUrl(p.storage_path)} target="_blank" rel="noreferrer"
-            className="aspect-square overflow-hidden rounded-xl bg-muted">
-            <img src={photoUrl(p.thumb_path)} alt={`제보 사진 ${i + 1}`} className="size-full object-cover" />
-          </a>
-        ))}
+        {report.report_photos.map((p, i) => {
+          const photo = publicPhoto(p);
+          const img = photo.thumb && (
+            <img src={photo.thumb} alt={`제보 사진 ${i + 1}`} className="size-full object-cover" />
+          );
+          return photo.full ? (
+            <a key={p.id} href={photo.full} target="_blank" rel="noreferrer"
+              className="aspect-square overflow-hidden rounded-xl bg-muted">
+              {img}
+            </a>
+          ) : (
+            <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+              {img}
+              <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white [text-shadow:0_1px_3px_rgba(0,0,0,.6)]">
+                검토 중
+              </span>
+            </div>
+          );
+        })}
       </div>
+      {report.report_photos.some((p) => p.moderation_status === "pending") && (
+        <p className="px-4 pt-2 text-xs text-muted-foreground">사진은 관리자 검토 후 공개돼요.</p>
+      )}
 
       <section className="px-4 pt-4">
         <p className="flex items-start gap-1.5 text-[17px] font-bold">
@@ -66,7 +82,7 @@ async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["pa
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full bg-muted px-2.5 py-1">사용자 제보</span>
           <span className="rounded-full bg-muted px-2.5 py-1">{formatDate(report.created_at)}</span>
-          <span className="rounded-full bg-pink-soft px-2.5 py-1 font-semibold"><StatusText status={report.status} /></span>
+          <StatusBadge status={report.status} />
         </div>
         <div className="mt-4 flex items-center justify-between rounded-xl border px-4 py-3 text-sm">
           <span className="text-muted-foreground">조회번호</span>

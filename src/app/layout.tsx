@@ -22,11 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
       </head>
-      <body className="min-h-full bg-neutral-100">
-        <div className="relative mx-auto flex min-h-dvh max-w-[480px] flex-col bg-white shadow-sm">
-          {children}
-        </div>
-      </body>
+      <body className="min-h-full bg-neutral-100">{children}</body>
     </html>
   );
 }

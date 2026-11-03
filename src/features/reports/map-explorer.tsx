@@ -7,13 +7,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { MapView, type MapController } from "@/features/map/map-view";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { SIDO_LIST } from "@/shared/constants";
+import { PUBLIC_REPORT_COLUMNS, SIDO_LIST } from "@/shared/constants";
 import type { MapPoint, PublicReport } from "@/shared/types";
 import { ReportListItem } from "./report-list-item";
 
 const KOREA = { lat: 36.2, lng: 127.9, level: 13 };
-const LIST_COLUMNS =
-  "id, report_no, status, lat, lng, address, road_address, sido, sigungu, created_at, report_photos(storage_path, thumb_path, width, height, sort_order)";
 
 export function MapExplorer({ points }: { points: MapPoint[] }) {
   const router = useRouter();
@@ -45,7 +43,7 @@ export function MapExplorer({ points }: { points: MapPoint[] }) {
     let cancelled = false;
     let q = createClient()
       .from("reports")
-      .select(LIST_COLUMNS)
+      .select(PUBLIC_REPORT_COLUMNS)
       .order("created_at", { ascending: false })
       .order("sort_order", { referencedTable: "report_photos" })
       .limit(100);

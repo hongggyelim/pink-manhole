@@ -3,18 +3,16 @@ import { cache } from "react";
 import { connection } from "next/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { PHOTO_BUCKET } from "@/shared/constants";
+import { PUBLIC_REPORT_COLUMNS, UPLOAD_BUCKET } from "@/shared/constants";
 import { photoPaths } from "@/shared/photo";
 import type { CreateReportInput } from "@/shared/schemas";
 import type { MapPoint, PublicReport } from "@/shared/types";
 import { reverseGeocode } from "./geocode";
+import { processDraftPhotos, syncReportFiles } from "./photo-files";
 
-const REPORT_COLUMNS =
-  "id, report_no, status, lat, lng, address, road_address, sido, sigungu, created_at, report_photos(storage_path, thumb_path, width, height, sort_order)";
+/* ── Public reads (always fresh; RLS hides hidden/deleted reports + private photos) ── */
 
-/* ── Public reads (always fresh: called at request time) ───────────────── */
-
-/** Deduped per request (home renders banner + map from the same data). */
+/** Deduped per request. */
 export const getMapPoints = cache(async (): Promise<MapPoint[]> => {
   await connection();
   const { data, error } = await createPublicClient()
@@ -26,11 +24,11 @@ export const getMapPoints = cache(async (): Promise<MapPoint[]> => {
   return data.map((r) => ({ id: r.id, reportNo: r.report_no, lat: r.lat, lng: r.lng, sido: r.sido }));
 });
 
-export async function getTotalCount() {
+export async function getTotalCount(sido?: string) {
   await connection();
-  const { count, error } = await createPublicClient()
-    .from("reports")
-    .select("id", { count: "exact", head: true });
+  let q = createPublicClient().from("reports").select("id", { count: "exact", head: true });
+  if (sido) q = q.eq("sido", sido);
+  const { count, error } = await q;
   if (error) throw error;
   return count ?? 0;
 }
@@ -39,7 +37,7 @@ export async function getReportByNo(reportNo: string): Promise<PublicReport | nu
   await connection();
   const { data, error } = await createPublicClient()
     .from("reports")
-    .select(REPORT_COLUMNS)
+    .select(PUBLIC_REPORT_COLUMNS)
     .eq("report_no", reportNo)
     .order("sort_order", { referencedTable: "report_photos" })
     .maybeSingle();
@@ -51,7 +49,7 @@ export async function getRecentReports(opts: { sido?: string; limit?: number } =
   await connection();
   let q = createPublicClient()
     .from("reports")
-    .select(REPORT_COLUMNS)
+    .select(PUBLIC_REPORT_COLUMNS)
     .order("created_at", { ascending: false })
     .order("sort_order", { referencedTable: "report_photos" })
     .limit(opts.limit ?? 50);
@@ -78,10 +76,7 @@ export async function countNearby(lat: number, lng: number) {
 /** Aggregates in JS — fine at MVP scale; move to a SQL view/RPC if reports grow large. */
 export async function getStats() {
   await connection();
-  const { data, error } = await createPublicClient()
-    .from("reports")
-    .select("sido, status")
-    .limit(20000);
+  const { data, error } = await createPublicClient().from("reports").select("sido, status").limit(20000);
   if (error) throw error;
   const bySido = new Map<string, number>();
   const byStatus = new Map<string, number>();
@@ -99,51 +94,30 @@ export async function getStats() {
 
 /* ── Writes (secret key; callers must validate + rate-limit first) ─────── */
 
+/** One signed upload per photo, into the PRIVATE bucket. */
 export async function createSignedUploads(draftId: string, count: number) {
-  const storage = createAdminClient().storage.from(PHOTO_BUCKET);
-  const uploads = [];
-  for (let i = 0; i < count; i++) {
-    const { full, thumb } = photoPaths(draftId, i);
-    const [a, b] = await Promise.all([
-      storage.createSignedUploadUrl(full),
-      storage.createSignedUploadUrl(thumb),
-    ]);
-    if (a.error || b.error) throw a.error ?? b.error;
-    uploads.push({
-      full: { path: full, token: a.data.token },
-      thumb: { path: thumb, token: b.data.token },
-    });
-  }
-  return uploads;
+  const storage = createAdminClient().storage.from(UPLOAD_BUCKET);
+  return Promise.all(
+    Array.from({ length: count }, async (_, i) => {
+      const { full } = photoPaths(draftId, i);
+      const { data, error } = await storage.createSignedUploadUrl(full);
+      if (error) throw error;
+      return { path: full, token: data.token };
+    }),
+  );
 }
 
-export class ReportError extends Error {
-  constructor(public code: "photos_missing", message: string) {
-    super(message);
-  }
-}
-
-export async function createReport(
-  input: CreateReportInput,
-  meta: { ipHash: string; userAgent: string },
-) {
+export async function createReport(input: CreateReportInput, meta: { ipHash: string; userAgent: string }) {
   const admin = createAdminClient();
 
-  // Verify every expected file was actually uploaded under this draft folder.
-  const { data: files, error: listError } = await admin.storage
-    .from(PHOTO_BUCKET)
-    .list(input.draftId, { limit: 20 });
-  if (listError) throw listError;
-  const names = new Set(files.map((f) => f.name));
-  const photos = input.photos.map((p, i) => {
-    const { full, thumb } = photoPaths(input.draftId, i);
-    if (!names.has(full.split("/")[1]) || !names.has(thumb.split("/")[1])) {
-      throw new ReportError("photos_missing", "업로드된 사진을 찾을 수 없습니다.");
-    }
-    return { storage_path: full, thumb_path: thumb, width: p.width, height: p.height };
-  });
+  // Idempotent retry: the draft already became a report.
+  const { data: existing } = await admin.from("reports").select("report_no").eq("id", input.draftId).maybeSingle();
+  if (existing) return existing.report_no as string;
 
-  const geo = await reverseGeocode(input.lat, input.lng);
+  const [photos, geo] = await Promise.all([
+    processDraftPhotos(admin, input.draftId, input.photoCount),
+    reverseGeocode(input.lat, input.lng),
+  ]);
 
   const { data, error } = await admin.rpc("create_report", {
     p_id: input.draftId,
@@ -158,5 +132,8 @@ export async function createReport(
     p_user_agent: meta.userAgent,
   });
   if (error) throw error;
+
+  // Publish the blur previews (originals stay private until approved).
+  await syncReportFiles(admin, input.draftId);
   return data as string;
 }
