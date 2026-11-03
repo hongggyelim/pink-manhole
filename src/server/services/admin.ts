@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { PHOTO_BUCKET, PUBLIC_REPORT_COLUMNS, UPLOAD_BUCKET, type ReportStatus } from "@/shared/constants";
+import { PHOTO_BUCKET, PUBLIC_REPORT_COLUMNS, REPORT_STATUSES, SIDO_LIST, UPLOAD_BUCKET, type ReportStatus } from "@/shared/constants";
 import { photoUrl } from "@/shared/photo";
 import type { AdminReport, ReportPhoto } from "@/shared/types";
 import { desiredBuckets } from "./photo-files";
@@ -50,13 +50,14 @@ function sanitizeSearch(q: string) {
   return q.replace(/[%,()*\\:."']/g, " ").trim().slice(0, 50);
 }
 
-export async function listAdminReports(db: SupabaseClient, f: AdminListFilters) {
+/** Shared by the list and the Excel export so both always apply the same conditions. */
+function filteredReports(db: SupabaseClient, f: Omit<AdminListFilters, "page">, from: number, to: number) {
   let q = db
     .from("reports")
     .select(ADMIN_COLUMNS, { count: "exact" })
     .order("created_at", { ascending: false })
     .order("sort_order", { referencedTable: "report_photos" })
-    .range((f.page - 1) * ADMIN_PAGE_SIZE, f.page * ADMIN_PAGE_SIZE - 1);
+    .range(from, to);
 
   if (f.view === "deleted") q = q.not("deleted_at", "is", null);
   else {
@@ -71,10 +72,42 @@ export async function listAdminReports(db: SupabaseClient, f: AdminListFilters) 
     const like = `%${term}%`;
     q = q.or(`address.ilike.${like},road_address.ilike.${like},report_no.ilike.${like},sigungu.ilike.${like}`);
   }
+  return q;
+}
 
-  const { data, count, error } = await q;
+export async function listAdminReports(db: SupabaseClient, f: AdminListFilters) {
+  const { data, count, error } = await filteredReports(
+    db, f, (f.page - 1) * ADMIN_PAGE_SIZE, f.page * ADMIN_PAGE_SIZE - 1,
+  );
   if (error) throw error;
   return { reports: data as unknown as AdminReport[], count: count ?? 0 };
+}
+
+export const EXPORT_MAX_ROWS = 20_000;
+
+/** Every report matching the filters (all pages), fetched in 1000-row batches. */
+export async function listAllAdminReports(db: SupabaseClient, f: Omit<AdminListFilters, "page">) {
+  const batch = 1000;
+  const all: AdminReport[] = [];
+  for (let from = 0; from < EXPORT_MAX_ROWS; from += batch) {
+    const { data, error } = await filteredReports(db, f, from, from + batch - 1);
+    if (error) throw error;
+    all.push(...(data as unknown as AdminReport[]));
+    if (data.length < batch) break;
+  }
+  return all;
+}
+
+/** Parses + validates list filters from URL search params (dashboard and export). */
+export function parseAdminFilters(sp: Record<string, string | string[] | undefined>): AdminListFilters {
+  const str = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
+  const views: AdminView[] = ["all", "public", "hidden", "deleted"];
+  const view = views.includes(sp.view as AdminView) ? (sp.view as AdminView) : "all";
+  const statusRaw = str(sp.status);
+  const status = statusRaw && statusRaw in REPORT_STATUSES ? (statusRaw as ReportStatus) : undefined;
+  const sido = SIDO_LIST.some((s) => s.name === sp.sido) ? str(sp.sido) : undefined;
+  const page = Math.max(1, Number(str(sp.page)) || 1);
+  return { view, status, sido, q: str(sp.q)?.trim() || undefined, page };
 }
 
 export async function getAdminReport(db: SupabaseClient, id: string) {

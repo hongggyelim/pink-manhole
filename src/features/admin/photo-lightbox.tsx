@@ -72,16 +72,18 @@ export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided 
     return () => window.removeEventListener("keydown", onKey);
   }, [go, decide, onClose]);
 
+  const [touchX, setTouchX] = useState<number | null>(null);
+
   if (!item) return null;
 
   return (
     <div role="dialog" aria-modal className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white">
-      <div className="flex items-center gap-3 px-4 py-3 text-sm">
+      <div className="flex items-center gap-2 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 text-sm sm:gap-3 sm:px-4">
         <span className="tabular-nums text-white/70">{index + 1} / {items.length}</span>
         <Link href={`/admin/reports/${item.reportId}`} className="font-mono font-semibold underline-offset-2 hover:underline">
           {item.reportNo}
         </Link>
-        <span className="truncate text-white/70">{item.address ?? "주소 없음"}</span>
+        <span className="hidden truncate text-white/70 sm:inline">{item.address ?? "주소 없음"}</span>
         <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold",
           item.status === "approved" ? "bg-emerald-500/20 text-emerald-300"
             : item.status === "private" ? "bg-white/15 text-white/80" : "bg-amber-500/20 text-amber-300")}>
@@ -96,7 +98,16 @@ export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided 
         </button>
       </div>
 
-      <div className="relative min-h-0 flex-1">
+      <div
+        className="relative min-h-0 flex-1"
+        onTouchStart={(e) => !zoomed && setTouchX(e.touches[0].clientX)}
+        onTouchEnd={(e) => {
+          if (touchX === null) return;
+          const dx = e.changedTouches[0].clientX - touchX;
+          if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1);
+          setTouchX(null);
+        }}
+      >
         <div className={cn("absolute inset-0", zoomed ? "overflow-auto" : "flex items-center justify-center overflow-hidden")}>
           <img
             key={item.photoId}
@@ -109,26 +120,27 @@ export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided 
         </div>
         {items.length > 1 && (
           <>
-            <button aria-label="이전" onClick={() => go(-1)} className="absolute top-1/2 left-3 -translate-y-1/2 rounded-full bg-black/50 p-2.5 hover:bg-black/70">
+            <button aria-label="이전" onClick={() => go(-1)} className="absolute top-1/2 left-2 hidden sm:block -translate-y-1/2 rounded-full bg-black/50 p-2.5 hover:bg-black/70">
               <ChevronLeft className="size-6" />
             </button>
-            <button aria-label="다음" onClick={() => go(1)} className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full bg-black/50 p-2.5 hover:bg-black/70">
+            <button aria-label="다음" onClick={() => go(1)} className="absolute top-1/2 right-2 hidden sm:block -translate-y-1/2 rounded-full bg-black/50 p-2.5 hover:bg-black/70">
               <ChevronRight className="size-6" />
             </button>
           </>
         )}
       </div>
 
-      <div className="flex flex-col items-center gap-2 px-4 py-4">
+      <div className="flex flex-col items-center gap-2 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <p className="max-w-full truncate text-xs text-white/60 sm:hidden">{item.address ?? "주소 없음"}</p>
         {error && <p className="text-sm text-red-300">{error}</p>}
         <div className="flex w-full max-w-md gap-3">
           <button disabled={pending} onClick={() => decide("private")}
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white/15 font-semibold hover:bg-white/25 disabled:opacity-50">
-            <EyeOff className="size-5" /> 비공개 <kbd className="text-xs text-white/50">H</kbd>
+            <EyeOff className="size-5" /> 비공개 <kbd className="hidden text-xs text-white/50 sm:inline">H</kbd>
           </button>
           <button disabled={pending} onClick={() => decide("approved")}
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary font-semibold hover:bg-primary/90 disabled:opacity-50">
-            <Check className="size-5" /> 승인 <kbd className="text-xs text-white/60">A</kbd>
+            <Check className="size-5" /> 승인 <kbd className="hidden text-xs text-white/60 sm:inline">A</kbd>
           </button>
         </div>
       </div>

@@ -14,7 +14,7 @@ Current scope is **data collection only**. Submitting to 국민신문고 is out 
 
 ```bash
 pnpm dev            # dev server (Turbopack)
-pnpm build          # production build — run before pushing
+pnpm build          # production build — run before pushing. Stop `pnpm dev` first: both share .next and the dev server ends up serving stale modules
 pnpm lint           # ESLint
 supabase db push    # apply supabase/migrations to the linked remote project
 supabase migration new <name>   # create a new migration (never edit applied ones)

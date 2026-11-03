@@ -72,7 +72,7 @@ async function Detail({ params }: { params: PageProps<"/admin/reports/[id]">["pa
       <div className="space-y-6">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-mono text-xl font-bold">{report.report_no}</h1>
+            <h1 className="font-mono text-lg font-bold sm:text-xl">{report.report_no}</h1>
             {report.deleted_at && <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">삭제됨</span>}
             {report.is_hidden && !report.deleted_at && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">비공개</span>}
             {visible && (
@@ -81,7 +81,7 @@ async function Detail({ params }: { params: PageProps<"/admin/reports/[id]">["pa
               </Link>
             )}
           </div>
-          <p className="mt-1 text-lg">{address ?? "주소 없음"}</p>
+          <p className="mt-1 text-base sm:text-lg">{address ?? "주소 없음"}</p>
           {report.road_address && report.address && <p className="text-sm text-muted-foreground">{report.address}</p>}
           <p className="mt-1 text-xs text-muted-foreground">
             {report.lat.toFixed(6)}, {report.lng.toFixed(6)} · 등록 {fmt(report.created_at)}

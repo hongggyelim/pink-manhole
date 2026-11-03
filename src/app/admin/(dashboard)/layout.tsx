@@ -10,27 +10,30 @@ export default function AdminDashboardLayout({ children }: LayoutProps<"/admin">
   return (
     <>
       <header className="sticky top-0 z-30 border-b bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
-          <Link href="/admin" className="mr-3 font-extrabold text-navy">분홍맨홀 관리자</Link>
-          <NavLink href="/admin">제보 목록</NavLink>
-          <NavLink href="/admin/photos">
-            사진 검토
-            <Suspense>
-              <PendingBadge />
-            </Suspense>
-          </NavLink>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 px-4">
+          <Link href="/admin" className="flex h-14 items-center font-extrabold text-navy md:mr-3">분홍맨홀 관리자</Link>
+          {/* Mobile: nav drops to its own full-width row below the logo/logout row. */}
+          <nav className="order-last -mx-1 flex w-full gap-1 pb-2 md:order-none md:mx-0 md:w-auto md:pb-0 [&>a]:flex-1 [&>a]:justify-center md:[&>a]:flex-none">
+            <NavLink href="/admin">제보 목록</NavLink>
+            <NavLink href="/admin/photos">
+              사진 검토
+              <Suspense>
+                <PendingBadge />
+              </Suspense>
+            </NavLink>
+          </nav>
           <div className="flex-1" />
           <Suspense>
             <AdminEmail />
           </Suspense>
           <form action={signOut}>
-            <button className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted">
-              <LogOut className="size-4" /> 로그아웃
+            <button aria-label="로그아웃" className="flex items-center gap-1 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-muted sm:px-3">
+              <LogOut className="size-4" /> <span className="hidden sm:inline">로그아웃</span>
             </button>
           </form>
         </div>
       </header>
-      <div className="mx-auto max-w-6xl px-4 py-6">{children}</div>
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:py-6">{children}</div>
     </>
   );
 }
@@ -59,5 +62,5 @@ async function PendingBadge() {
 
 async function AdminEmail() {
   const { email } = await requireAdminPage();
-  return <span className="hidden text-xs text-muted-foreground sm:inline">{email}</span>;
+  return <span className="hidden text-xs text-muted-foreground md:inline">{email}</span>;
 }

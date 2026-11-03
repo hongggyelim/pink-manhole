@@ -15,7 +15,7 @@ export function ReportPhotos({ items: initial }: { items: ReportPhotoItem[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {items.map((p, i) => (
           <button key={p.photoId} onClick={() => setOpen(i)} className="overflow-hidden rounded-xl border bg-white text-left">
             <div className="aspect-square bg-muted">
