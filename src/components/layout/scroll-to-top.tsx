@@ -8,8 +8,12 @@ import { Route } from "@/shared/routes";
 
 /** Pages where the button never shows (the map is a fixed, non-scrolling view). */
 const EXCLUDED = [Route.Map];
-/** Show once the top header (56px) plus some content has scrolled out of view. */
-const SHOW_AFTER_PX = 240;
+/**
+ * Show as soon as the top of the page is out of view: every page starts with a 56px header
+ * (logo / title / back button). A larger fixed threshold never triggered on short pages —
+ * on a 393×852 phone, /stats only scrolls ~157px.
+ */
+const SHOW_AFTER_PX = 56;
 /**
  * Pages with something fixed at the bottom (tab bar, report submit bar). They all share ONE
  * offset — tall enough to clear the taller of the two (the submit bar) — so the button sits
