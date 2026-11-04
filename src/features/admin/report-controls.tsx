@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { ConfirmDialog } from "@/features/report-form/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { setReportDeleted, setReportHidden, setReportStatus, type ActionResult } from "@/server/admin-actions";
 import { REPORT_STATUSES, type ReportStatus } from "@/shared/constants";
@@ -12,6 +13,7 @@ export function ReportControls({ reportId, status, isHidden, isDeleted }: Props)
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   function act(fn: () => Promise<ActionResult>) {
     setError(null);
@@ -60,15 +62,29 @@ export function ReportControls({ reportId, status, isHidden, isDeleted }: Props)
             삭제 취소 (복구)
           </button>
         ) : (
-          <button disabled={pending}
-            onClick={() => confirm("이 제보를 삭제할까요? 사용자에게 보이지 않게 되며, 삭제 목록에서 복구할 수 있어요.") &&
-              act(() => setReportDeleted(reportId, true))}
+          <button disabled={pending} onClick={() => setConfirmDelete(true)}
             className="h-10 w-full rounded-lg border border-destructive/40 text-sm font-semibold text-destructive hover:bg-destructive/5">
             제보 삭제
           </button>
         )}
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
+      {/* In-page dialog, not window.confirm(): in-app/embedded browsers often suppress native
+          dialogs (confirm() returns false right away), so the delete never ran. */}
+      {confirmDelete && (
+        <ConfirmDialog
+          title="이 제보를 삭제할까요?"
+          confirmLabel="삭제"
+          cancelLabel="취소"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setConfirmDelete(false);
+            act(() => setReportDeleted(reportId, true));
+          }}
+        >
+          사용자에게 보이지 않게 되며, 삭제 목록에서 복구할 수 있어요.
+        </ConfirmDialog>
+      )}
     </div>
   );
 }
