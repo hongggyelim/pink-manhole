@@ -104,7 +104,7 @@ export default function AboutPage() {
         </a>
       </section>
 
-      <section className="px-5 pt-8">
+      <section id="why" className="scroll-mt-16 px-5 pt-8">
         <h2 className="text-lg font-bold">이 서비스를 만든 이유</h2>
         <div className="mt-3 space-y-3 text-[15px] leading-relaxed break-keep text-muted-foreground">
           <p>

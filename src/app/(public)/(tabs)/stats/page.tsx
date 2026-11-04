@@ -1,4 +1,7 @@
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { Suspense } from "react";
+import { WeeklyChart } from "@/features/reports/weekly-chart";
 import { REPORT_STATUSES, type ReportStatus } from "@/shared/constants";
 import { getStats } from "@/server/services/reports";
 
@@ -8,6 +11,14 @@ export default function StatsPage() {
   return (
     <main className="px-4 pb-8">
       <h1 className="flex h-14 items-center text-lg font-bold">제보 현황</h1>
+      <Link href="/about#why" className="mb-5 flex items-center gap-2 rounded-xl bg-muted px-4 py-3 text-sm">
+        <span className="flex-1 leading-snug break-keep text-muted-foreground">
+          모인 제보는 지역별로 정리해 지자체에 개선을 요청하는 데 사용돼요.
+        </span>
+        <span className="flex shrink-0 items-center font-semibold whitespace-nowrap">
+          왜 만들었나요? <ChevronRight className="size-4" />
+        </span>
+      </Link>
       <Suspense fallback={<p className="py-10 text-center text-sm text-muted-foreground">불러오는 중…</p>}>
         <Stats />
       </Suspense>
@@ -16,13 +27,33 @@ export default function StatsPage() {
 }
 
 async function Stats() {
-  const { total, bySido, byStatus } = await getStats();
+  const { total, thisWeek, lastWeek, districtCount, submitted, weekly, bySido, byStatus } = await getStats();
+  const delta = thisWeek - lastWeek;
   const max = Math.max(1, ...bySido.map(([, n]) => n));
   return (
     <div className="space-y-6">
       <section className="rounded-2xl bg-pink-soft p-5">
         <p className="text-sm text-muted-foreground">전체 제보</p>
-        <p className="mt-1 text-3xl font-extrabold text-primary">{total.toLocaleString()}건</p>
+        <p className="mt-1 text-5xl font-extrabold">
+          {total.toLocaleString()}
+          <span className="ml-1 text-xl font-bold">건</span>
+        </p>
+      </section>
+
+      <section aria-label="주요 지표" className="grid grid-cols-3 gap-2">
+        <StatTile
+          label="이번 주 신규"
+          value={`${thisWeek.toLocaleString()}건`}
+          note={delta === 0 ? "지난주와 같아요" : `지난주보다 ${delta > 0 ? "+" : ""}${delta}건`}
+        />
+        <StatTile label="제보 지역" value={`${districtCount.toLocaleString()}곳`} note="시·군·구 기준" />
+        <StatTile label="민원 접수" value={`${submitted.toLocaleString()}건`} note="지자체 전달 완료" />
+      </section>
+
+      <section>
+        <h2 className="font-bold">주별 제보 추이</h2>
+        <p className="mt-0.5 mb-4 text-xs text-muted-foreground">최근 8주 · 월요일 시작 기준</p>
+        <WeeklyChart data={weekly} />
       </section>
 
       <section>
@@ -52,6 +83,16 @@ async function Stats() {
           ))}
         </ul>
       </section>
+    </div>
+  );
+}
+
+function StatTile({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="rounded-xl border p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-bold tabular-nums">{value}</p>
+      <p className="mt-0.5 text-[11px] leading-tight break-keep text-muted-foreground">{note}</p>
     </div>
   );
 }
