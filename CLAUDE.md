@@ -56,4 +56,4 @@ Maps use **Kakao**. All SDK code stays in `src/features/map/`: `kakao-loader.ts`
 
 ## Environment
 
-Copy `.env.example` to `.env.local`. The same variables must be set in Vercel. `SUPABASE_SECRET_KEY` and `KAKAO_REST_API_KEY` must never use the `NEXT_PUBLIC_` prefix. In the Kakao Developers app, register every site domain (localhost:3000 and the Vercel domain) under the Web platform, or the JS SDK will not load.
+Copy `.env.example` to `.env.local`. The same variables must be set in Vercel. `SUPABASE_SECRET_KEY` and `KAKAO_REST_API_KEY` must never use the `NEXT_PUBLIC_` prefix. Google Analytics 4 loads only when `NEXT_PUBLIC_GA_ID` is set, and only in the `(public)` layout, so admin pages are never tracked. In the Kakao Developers app, register every site domain (localhost:3000 and the Vercel domain) under the Web platform, or the JS SDK will not load.
