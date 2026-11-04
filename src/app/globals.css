@@ -136,3 +136,23 @@
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
 }
+
+/* Landing illustration (src/components/layout/landing-scene.tsx) */
+@keyframes ls-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes ls-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes ls-flash {
+  0%, 62%, 100% { opacity: 0; transform: scale(0.4); }
+  68% { opacity: 1; transform: scale(1.15); }
+  76% { opacity: 0.85; transform: scale(0.95); }
+  86% { opacity: 0; transform: scale(0.6); }
+}
+@keyframes ls-flash-cone { 0%, 62%, 90%, 100% { opacity: 0; } 68% { opacity: 0.22; } }
+.ls-float { animation: ls-float 4s ease-in-out infinite; }
+.ls-bob { animation: ls-bob 2.4s ease-in-out infinite; }
+.ls-flash { transform-box: fill-box; transform-origin: center; animation: ls-flash 2.4s ease-out infinite; }
+.ls-flash-cone { animation: ls-flash-cone 2.4s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ls-float, .ls-bob, .ls-flash, .ls-flash-cone { animation: none; }
+  .ls-flash { opacity: 1; }
+  .ls-flash-cone { opacity: 0.12; }
+}

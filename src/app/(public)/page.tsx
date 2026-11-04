@@ -1,11 +1,11 @@
 import { Camera, ChevronRight, MapPin } from "lucide-react";
 import Link from "next/link";
-import { PinkManhole } from "@/components/layout/pink-manhole";
+import { LandingScene } from "@/components/layout/landing-scene";
 
 export default function LandingPage() {
   return (
-    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-gradient-to-b from-[#3a3a3f] via-[#4a4648] to-[#2b2a2e] px-6 pt-20 pb-10 text-white">
-      <h1 className="text-[34px] leading-tight font-extrabold">
+    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-gradient-to-b from-[#3a3a3f] via-[#4a4648] to-[#2b2a2e] px-6 pt-14 pb-10 text-white">
+      <h1 className="text-[32px] leading-tight font-extrabold">
         전국의{" "}
         <MapPin className="inline size-9 -translate-y-1 fill-primary text-primary [&>circle]:fill-[#3a3a3f] [&>circle]:stroke-[#3a3a3f]" />
         <br />
@@ -13,13 +13,13 @@ export default function LandingPage() {
         <br />
         찾아주세요
       </h1>
-      <p className="mt-5 text-[17px] leading-relaxed text-white/85">
+      <p className="mt-4 text-[17px] leading-relaxed text-white/85">
         당신의 제보가
         <br />더 안전한 일상을 만듭니다.
       </p>
 
-      <div className="flex flex-1 items-center justify-center py-8">
-        <PinkManhole className="w-[115%] max-w-none -rotate-12 drop-shadow-2xl [transform:rotateX(55deg)_rotate(-12deg)]" />
+      <div className="-mx-6 flex min-h-0 flex-1 items-center justify-center py-4">
+        <LandingScene className="h-auto max-h-[46dvh] w-full" />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -30,7 +30,7 @@ export default function LandingPage() {
           <Camera className="size-5" /> 신고하기
         </Link>
         <Link
-          href="/home"
+          href="/map"
           className="flex h-14 items-center justify-center rounded-full border-2 border-white/90 text-lg font-bold"
         >
           지도에서 보기
