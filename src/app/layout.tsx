@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,7 +24,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
       </head>
-      <body className="min-h-full bg-neutral-100">{children}</body>
+      <body className="min-h-full bg-neutral-100">
+        {children}
+        {/* usePathname() needs a Suspense boundary under Cache Components */}
+        <Suspense>
+          <ScrollToTop />
+        </Suspense>
+      </body>
     </html>
   );
 }
