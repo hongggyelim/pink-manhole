@@ -1,6 +1,8 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { pageMetadata } from "@/shared/seo";
+import { Route } from "@/shared/routes";
 
-export const metadata = { title: "자주 묻는 질문" };
+export const metadata = pageMetadata({ title: "자주 묻는 질문", path: Route.Faq, description: "분홍 맨홀 제보 서비스 이용에 대해 자주 묻는 질문과 답변입니다." });
 
 const FAQ = [
   { q: "회원가입이 필요한가요?", a: "아니요. 누구나 회원가입 없이 사진과 위치만으로 제보할 수 있어요." },

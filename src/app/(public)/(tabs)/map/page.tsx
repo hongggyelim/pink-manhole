@@ -1,8 +1,10 @@
 import { Suspense } from "react";
+import { pageMetadata } from "@/shared/seo";
+import { Route } from "@/shared/routes";
 import { MapExplorer } from "@/features/reports/map-explorer";
 import { getMapPoints } from "@/server/services/reports";
 
-export const metadata = { title: "지도" };
+export const metadata = pageMetadata({ title: "지도", path: Route.Map, description: "전국 분홍 맨홀 제보 위치를 지도에서 확인하세요." });
 
 export default function MapPage() {
   return (

@@ -1,6 +1,8 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { pageMetadata } from "@/shared/seo";
+import { Route } from "@/shared/routes";
 
-export const metadata = { title: "공지사항" };
+export const metadata = pageMetadata({ title: "공지사항", path: Route.Notices });
 
 const NOTICES = [
   {

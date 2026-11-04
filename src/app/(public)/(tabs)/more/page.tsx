@@ -1,4 +1,5 @@
 import { Logo } from "@/components/layout/logo";
+import { pageMetadata } from "@/shared/seo";
 import {
   BarChart3,
   ChevronRight,
@@ -11,7 +12,7 @@ import {
 import Link from "next/link";
 import { Route } from "@/shared/routes";
 
-export const metadata = { title: "더보기" };
+export const metadata = pageMetadata({ title: "더보기", path: Route.More });
 
 const MENU = [
   { href: Route.About, label: "분홍 맨홀이 위험한 이유", icon: Info },

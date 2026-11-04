@@ -1,5 +1,7 @@
 import { MapPin } from "lucide-react";
-import { Route, withQuery } from "@/shared/routes";
+import { Route, routes, withQuery } from "@/shared/routes";
+import { pageMetadata } from "@/shared/seo";
+import { REPORT_STATUSES } from "@/shared/constants";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -16,13 +18,31 @@ import { reportNoSchema } from "@/shared/schemas";
 export async function generateMetadata({ params }: PageProps<"/reports/[reportNo]">): Promise<Metadata> {
   const { reportNo } = await params;
   const report = reportNoSchema.safeParse(reportNo).success ? await getReportByNo(reportNo) : null;
-  if (!report) return { title: "제보를 찾을 수 없어요" };
+  if (!report) return { title: "제보를 찾을 수 없어요", robots: { index: false } };
+
+  const address = report.road_address ?? report.address;
+  // Share card: the approved photo when there is one; otherwise the default card
+  // (never the blur preview — it would look like a broken image in a chat preview).
   const approved = report.report_photos.find((p) => p.moderation_status === "approved");
-  return {
-    title: report.road_address ?? report.address ?? "분홍 맨홀 제보",
-    description: `분홍 맨홀 제보 ${report.report_no}`,
-    openGraph: approved ? { images: [photoUrl(approved.storage_path)] } : undefined,
-  };
+  const description = [
+    `${REPORT_STATUSES[report.status]} · ${formatDate(report.created_at)} 제보`,
+    report.memo,
+    "분홍 맨홀을 발견하면 제보해주세요.",
+  ].filter(Boolean).join(" — ");
+
+  return pageMetadata({
+    title: address ?? "제보 상세",
+    description,
+    path: routes.reportDetail(report.report_no),
+    images: approved
+      ? [{
+          url: photoUrl(approved.storage_path),
+          width: approved.width ?? undefined,
+          height: approved.height ?? undefined,
+          alt: `${address ?? "제보 위치"}의 분홍 맨홀 사진`,
+        }]
+      : undefined,
+  });
 }
 
 export default function ReportDetailPage({ params }: PageProps<"/reports/[reportNo]">) {

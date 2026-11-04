@@ -1,4 +1,5 @@
 import { ChevronRight, Menu } from "lucide-react";
+import { pageMetadata } from "@/shared/seo";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/layout/logo";
@@ -9,7 +10,7 @@ import { getRecentReports, getTotalCount } from "@/server/services/reports";
 import { SIDO_LIST } from "@/shared/constants";
 import { Route, withQuery } from "@/shared/routes";
 
-export const metadata = { title: "홈" };
+export const metadata = pageMetadata({ title: "홈", path: Route.Home, description: "지역별로 모인 분홍 맨홀 제보를 확인하고, 발견한 맨홀을 제보해주세요." });
 
 type SP = PageProps<"/home">["searchParams"];
 

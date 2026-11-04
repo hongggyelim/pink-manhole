@@ -1,6 +1,8 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { pageMetadata } from "@/shared/seo";
+import { Route } from "@/shared/routes";
 
-export const metadata = { title: "개인정보처리방침" };
+export const metadata = pageMetadata({ title: "개인정보처리방침", path: Route.Privacy });
 
 // TODO: 운영자 연락처 기입 및 법률 검토 후 확정 (초안)
 const SECTIONS = [

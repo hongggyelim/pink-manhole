@@ -1,11 +1,12 @@
 import { WeeklyChart } from "@/features/reports/weekly-chart";
+import { pageMetadata } from "@/shared/seo";
 import { getStats } from "@/server/services/reports";
 import { Route } from "@/shared/routes";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
-export const metadata = { title: "통계" };
+export const metadata = pageMetadata({ title: "제보 현황", path: Route.Stats, description: "전국 분홍 맨홀 제보 현황 — 지역별 제보 수와 주별 추이, 처리 상태를 한눈에 확인하세요." });
 
 export default function StatsPage() {
   return (

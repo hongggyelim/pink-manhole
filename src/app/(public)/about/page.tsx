@@ -1,10 +1,11 @@
 import { Ban, Camera, Car, ExternalLink, Newspaper, ShieldAlert, TriangleAlert } from "lucide-react";
+import { pageMetadata } from "@/shared/seo";
 import Link from "next/link";
 import { DamagedManholes } from "@/components/layout/damaged-manholes";
 import { PageHeader } from "@/components/layout/page-header";
 import { Route } from "@/shared/routes";
 
-export const metadata = { title: "분홍 맨홀에 대해 알아보기" };
+export const metadata = pageMetadata({ title: "분홍 맨홀에 대해 알아보기", path: Route.About, description: "분홍색 콘크리트 맨홀이 위험한 이유와 대처 방법, 그리고 이 서비스를 만든 이유를 소개합니다." });
 
 const RISKS = [
   {

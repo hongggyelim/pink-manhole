@@ -1,12 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
+import { rootMetadata } from "@/shared/seo";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: { default: "분홍 맨홀", template: "%s · 분홍 맨홀" },
-  description: "전국의 분홍 맨홀을 찾아 제보해주세요. 당신의 제보가 더 안전한 일상을 만듭니다.",
-};
+export const metadata: Metadata = rootMetadata();
 
 export const viewport: Viewport = {
   themeColor: "#e8578a",
