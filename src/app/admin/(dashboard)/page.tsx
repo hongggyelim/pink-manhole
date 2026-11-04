@@ -1,17 +1,14 @@
-import { Download } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { FilterBar } from "@/features/admin/filter-bar";
+import { AdminReportList } from "@/features/admin/report-list";
 import { requireAdminPage } from "@/server/auth";
 import {
   ADMIN_PAGE_SIZE, getAdminPhotoUrls, getAdminStats, listAdminReports, parseAdminFilters,
   type AdminListFilters, type AdminView,
 } from "@/server/services/admin";
-import { REPORT_STATUSES } from "@/shared/constants";
-import { formatDate } from "@/shared/format";
-import type { AdminReport } from "@/shared/types";
-import { Route, routes, withQuery } from "@/shared/routes";
+import { Route, withQuery } from "@/shared/routes";
 
 export const metadata = { title: "제보 목록" };
 
@@ -73,19 +70,6 @@ async function Stats() {
   );
 }
 
-function Visibility({ r }: { r: AdminReport }) {
-  if (r.deleted_at) return <span className="text-xs text-destructive">삭제됨</span>;
-  if (r.is_hidden) return <span className="text-xs font-semibold">비공개</span>;
-  return <span className="text-xs text-emerald-700">공개</span>;
-}
-
-function PendingPhotos({ r }: { r: AdminReport }) {
-  const pending = r.report_photos.filter((p) => p.moderation_status === "pending").length;
-  return pending > 0
-    ? <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">사진 대기 {pending}</span>
-    : <span className="text-xs text-muted-foreground">검토 완료</span>;
-}
-
 async function ReportList({ searchParams }: { searchParams: SP }) {
   const f = parseAdminFilters(await searchParams);
   const { supabase } = await requireAdminPage();
@@ -95,10 +79,9 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
     reports.flatMap((r) => (r.report_photos[0] ? [{ photo: r.report_photos[0], visible: !r.is_hidden && !r.deleted_at }] : [])),
   );
   const pages = Math.max(1, Math.ceil(count / ADMIN_PAGE_SIZE));
-  const thumb = (r: AdminReport) => {
-    const first = r.report_photos[0];
-    return first && urls[first.id]?.thumb ? <img src={urls[first.id].thumb} alt="" className="size-full object-cover" /> : null;
-  };
+  const thumbs = Object.fromEntries(
+    reports.map((r) => [r.id, r.report_photos[0] ? urls[r.report_photos[0].id]?.thumb : undefined]),
+  );
 
   return (
     <section className="mt-6">
@@ -115,82 +98,15 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
       {/* key: remount when the URL changes so the search box reflects it */}
       <FilterBar key={withQuery(Route.Admin, filterParams(f, { page: undefined }))} filters={f} />
 
-      <div className="mt-4 mb-2 flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">{count.toLocaleString()}건</p>
-        <a
-          href={withQuery(Route.AdminExport, filterParams(f, { page: undefined }))}
-          download
-          aria-disabled={count === 0}
-          className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-lg border bg-white px-3 text-sm font-medium hover:bg-muted",
-            count === 0 && "pointer-events-none opacity-50",
-          )}
-        >
-          <Download className="size-4" /> 엑셀 다운로드
-        </a>
-      </div>
-
-      {reports.length === 0 && (
-        <p className="rounded-xl border bg-white p-10 text-center text-muted-foreground">조건에 맞는 제보가 없어요.</p>
-      )}
-
-      {/* Mobile: cards */}
-      <ul className="space-y-2 md:hidden">
-        {reports.map((r) => (
-          <li key={r.id}>
-            <Link href={routes.adminReport(r.id)} className="flex gap-3 rounded-xl border bg-white p-3">
-              <div className="size-16 shrink-0 overflow-hidden rounded-lg bg-muted">{thumb(r)}</div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-sm font-semibold">{r.report_no}</span>
-                  <Visibility r={r} />
-                </div>
-                <p className="mt-0.5 truncate text-sm">{r.road_address ?? r.address ?? "주소 없음"}</p>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{REPORT_STATUSES[r.status]}</span>
-                  <PendingPhotos r={r} />
-                  <span>{formatDate(r.created_at)}</span>
-                </div>
-              </div>
-            </Link>
-          </li>
-        ))}
-      </ul>
-
-      {/* Desktop: table */}
-      {reports.length > 0 && (
-        <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-neutral-50 text-left text-xs text-muted-foreground">
-              <tr>
-                <th className="p-3">사진</th><th className="p-3">조회번호</th><th className="p-3">주소</th>
-                <th className="p-3">상태</th><th className="p-3">사진 검토</th><th className="p-3">공개</th><th className="p-3">등록일</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {reports.map((r) => {
-                const link = routes.adminReport(r.id);
-                return (
-                  <tr key={r.id} className="hover:bg-neutral-50">
-                    <td className="p-2">
-                      <Link href={link} className="block size-12 overflow-hidden rounded-lg bg-muted">{thumb(r)}</Link>
-                    </td>
-                    <td className="p-3 font-mono"><Link href={link} className="hover:underline">{r.report_no}</Link></td>
-                    <td className="max-w-72 p-3">
-                      <Link href={link} className="block truncate hover:underline">{r.road_address ?? r.address ?? "주소 없음"}</Link>
-                      <span className="text-xs text-muted-foreground">{[r.sido, r.sigungu].filter(Boolean).join(" ")}</span>
-                    </td>
-                    <td className="p-3">{REPORT_STATUSES[r.status]}</td>
-                    <td className="p-3"><PendingPhotos r={r} /></td>
-                    <td className="p-3"><Visibility r={r} /></td>
-                    <td className="p-3 text-xs text-muted-foreground">{formatDate(r.created_at)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* key: reset the selection whenever the list (filters/page) changes */}
+      <AdminReportList
+        key={withQuery(Route.Admin, filterParams(f))}
+        reports={reports}
+        thumbs={thumbs}
+        count={count}
+        exportHref={withQuery(Route.AdminExport, filterParams(f, { page: undefined }))}
+        deletedView={f.view === "deleted"}
+      />
 
       {pages > 1 && (
         <div className="mt-4 flex items-center justify-center gap-3 text-sm">

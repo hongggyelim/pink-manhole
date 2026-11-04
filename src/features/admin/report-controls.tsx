@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/features/report-form/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { setReportDeleted, setReportHidden, setReportStatus, type ActionResult } from "@/server/admin-actions";
 import { REPORT_STATUSES, type ReportStatus } from "@/shared/constants";
+import { Route } from "@/shared/routes";
 
 type Props = { reportId: string; status: ReportStatus; isHidden: boolean; isDeleted: boolean };
 
@@ -79,7 +80,12 @@ export function ReportControls({ reportId, status, isHidden, isDeleted }: Props)
           onCancel={() => setConfirmDelete(false)}
           onConfirm={() => {
             setConfirmDelete(false);
-            act(() => setReportDeleted(reportId, true));
+            setError(null);
+            start(async () => {
+              const res = await setReportDeleted(reportId, true);
+              if (res.ok) router.push(Route.Admin);
+              else setError(res.error);
+            });
           }}
         >
           사용자에게 보이지 않게 되며, 삭제 목록에서 복구할 수 있어요.

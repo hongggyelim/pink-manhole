@@ -90,3 +90,19 @@ export async function setReportDeleted(reportId: string, deleted: boolean): Prom
     await syncReportFiles(supabase, id);
   });
 }
+
+const bulkIdsSchema = z.array(adminReportIdSchema).min(1).max(100);
+
+/** Bulk soft delete / restore. Each report goes through admin_set_deleted, so every one gets its own activity log. */
+export async function setReportsDeleted(reportIds: string[], deleted: boolean): Promise<ActionResult> {
+  return run(async () => {
+    const ids = [...new Set(bulkIdsSchema.parse(reportIds))];
+    const flag = z.boolean().parse(deleted);
+    const { supabase } = await requireAdminAction();
+    for (const id of ids) {
+      const { error } = await supabase.rpc("admin_set_deleted", { p_report_id: id, p_deleted: flag });
+      if (error) throw error;
+    }
+    await Promise.all(ids.map((id) => syncReportFiles(supabase, id)));
+  });
+}
