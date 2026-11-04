@@ -131,7 +131,7 @@ export default function AboutPage() {
       <div className="px-5">
         <Link
           href={Route.Report}
-          className="mt-8 flex h-14 items-center justify-center rounded-full bg-primary text-lg font-bold text-white"
+          className="mt-8 flex h-14 items-center justify-center rounded-lg bg-primary text-lg font-bold text-white"
         >
           분홍 맨홀 제보하기
         </Link>

@@ -25,13 +25,13 @@ export default function LandingPage() {
       <div className="flex shrink-0 flex-col gap-3 [@media(max-height:700px)]:gap-2">
         <Link
           href={Route.Report}
-          className="flex h-14 items-center justify-center gap-2 rounded-full bg-primary text-lg font-bold shadow-lg shadow-primary/30 [@media(max-height:700px)]:h-12"
+          className="flex h-14 items-center justify-center gap-2 rounded-lg bg-primary text-lg font-bold shadow-lg shadow-primary/30 [@media(max-height:700px)]:h-12"
         >
           <Camera className="size-5" /> 신고하기
         </Link>
         <Link
           href={Route.Map}
-          className="flex h-14 items-center justify-center rounded-full border-2 border-white/90 text-lg font-bold [@media(max-height:700px)]:h-12"
+          className="flex h-14 items-center justify-center rounded-lg border-2 border-white/90 text-lg font-bold [@media(max-height:700px)]:h-12"
         >
           지도에서 보기
         </Link>

@@ -124,7 +124,7 @@ async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["pa
         <p className="mt-1 text-sm text-muted-foreground">이 위치에서 총 {nearby}건의 제보가 접수되었어요.</p>
         <Link
           href={withQuery(Route.Map, { lat: report.lat, lng: report.lng })}
-          className="mt-4 flex h-12 items-center justify-center rounded-xl bg-pink-soft font-semibold text-primary"
+          className="mt-4 flex h-12 items-center justify-center rounded-lg bg-pink-soft font-semibold text-primary"
         >
           유사한 위치 보기
         </Link>

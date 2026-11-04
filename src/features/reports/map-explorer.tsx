@@ -86,7 +86,7 @@ export function MapExplorer({ points }: { points: MapPoint[] }) {
       >
         <button
           onClick={() => setOpen(true)}
-          className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-lg"
+          className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-lg bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-lg"
         >
           <List className="size-4" /> {sido ?? "전국"} 제보 {count.toLocaleString()}건 목록
         </button>

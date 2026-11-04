@@ -30,8 +30,8 @@ export function ConfirmDialog({ title, children, confirmLabel, cancelLabel, onCo
         <h2 id="confirm-title" className="text-lg font-bold">{title}</h2>
         <div className="mt-2 text-sm leading-relaxed text-muted-foreground">{children}</div>
         <div className="mt-5 grid grid-cols-2 gap-2">
-          <button onClick={onCancel} className="h-12 rounded-xl border font-semibold">{cancelLabel}</button>
-          <button autoFocus onClick={onConfirm} className="h-12 rounded-xl bg-primary font-semibold text-white">
+          <button onClick={onCancel} className="h-12 rounded-lg border font-semibold">{cancelLabel}</button>
+          <button autoFocus onClick={onConfirm} className="h-12 rounded-lg bg-primary font-semibold text-white">
             {confirmLabel}
           </button>
         </div>

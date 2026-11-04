@@ -136,11 +136,11 @@ export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided 
         {error && <p className="text-sm text-red-300">{error}</p>}
         <div className="flex w-full max-w-md gap-3">
           <button disabled={pending} onClick={() => decide("private")}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white/15 font-semibold hover:bg-white/25 disabled:opacity-50">
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-white/15 font-semibold hover:bg-white/25 disabled:opacity-50">
             <EyeOff className="size-5" /> 비공개 <kbd className="hidden text-xs text-white/50 sm:inline">H</kbd>
           </button>
           <button disabled={pending} onClick={() => decide("approved")}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary font-semibold hover:bg-primary/90 disabled:opacity-50">
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-primary font-semibold hover:bg-primary/90 disabled:opacity-50">
             <Check className="size-5" /> 승인 <kbd className="hidden text-xs text-white/60 sm:inline">A</kbd>
           </button>
         </div>

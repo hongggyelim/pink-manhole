@@ -1,8 +1,8 @@
 "use client";
 
-import { Camera, ImageIcon, Info, Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
+import { Camera, Check, ChevronDown, ImageIcon, Info, Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { searchPlaces, type PlaceResult } from "@/features/map/kakao-loader";
 import { MapView, type LatLng, type MapController } from "@/features/map/map-view";
@@ -46,6 +46,7 @@ export function ReportForm() {
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
   const [location, setLocation] = useState<DraftLocation | null>(null);
   const [memo, setMemo] = useState("");
+  const [memoOpen, setMemoOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
@@ -275,16 +276,22 @@ export function ReportForm() {
       <div className="flex-1 space-y-7 px-5 pt-2 pb-6">
         {/* 1. Photos */}
         <section aria-labelledby="photos-title">
-          <SectionTitle id="photos-title" title="사진" required meta={`${photos.length}/${MAX_PHOTOS}`} />
+          <SectionTitle
+            id="photos-title"
+            title="사진"
+            required
+            done={photos.length > 0}
+            right={<span className="text-xs text-muted-foreground tabular-nums">{photos.length}/{MAX_PHOTOS}</span>}
+          />
           <p className="mb-3 text-sm text-muted-foreground">맨홀의 상태와 위치를 알 수 있는 사진을 올려주세요.</p>
           {remaining > 0 && (
             <div className="grid grid-cols-2 gap-2">
               <button type="button" disabled={busy} onClick={openCamera}
-                className="flex h-12 items-center justify-center gap-1.5 rounded-xl bg-primary font-semibold text-white disabled:opacity-50">
+                className="flex h-12 items-center justify-center gap-1.5 rounded-lg bg-primary font-semibold text-white disabled:opacity-50">
                 <Camera className="size-5" /> 카메라로 촬영
               </button>
               <button type="button" disabled={busy} onClick={() => albumInputRef.current?.click()}
-                className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-pink-soft/40 font-semibold text-primary disabled:opacity-50">
+                className="flex h-12 items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-pink-soft/40 font-semibold text-primary disabled:opacity-50">
                 <ImageIcon className="size-5" /> 앨범에서 선택
               </button>
             </div>
@@ -313,9 +320,10 @@ export function ReportForm() {
 
         {/* 2. Location */}
         <section aria-labelledby="location-title">
-          <SectionTitle id="location-title" title="위치" required />
+          <SectionTitle id="location-title" title="위치" required done={location?.state === "ok"} />
+          <p className="mb-3 text-sm text-muted-foreground">주소를 검색하거나 지도에서 핀 위치를 설정해주세요.</p>
           <div ref={searchBoxRef} className="relative">
-          <form onSubmit={runSearch} className="flex items-center gap-2 rounded-xl border px-3 focus-within:border-primary">
+          <form onSubmit={runSearch} className="flex items-center gap-2 rounded-lg border px-3 focus-within:border-primary">
             <Search className="size-4 shrink-0 text-muted-foreground" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="주소 또는 장소 검색"
               enterKeyHint="search" className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none" />
@@ -369,29 +377,62 @@ export function ReportForm() {
                 {!location && <span className="text-muted-foreground">아직 위치를 지정하지 않았어요</span>}
                 {location?.state === "loading" && "주소 확인 중…"}
                 {location?.state === "outside" && <span className="text-destructive">대한민국 내 위치만 등록할 수 있어요.</span>}
-                {location?.state === "ok" && (location.address ?? "주소를 찾을 수 없는 위치예요 (좌표로 등록돼요)")}
+                {location?.state === "ok" &&
+                  (location.address ?? (
+                    <span className="tabular-nums">
+                      위도 {location.lat.toFixed(5)}, 경도 {location.lng.toFixed(5)}
+                    </span>
+                  ))}
               </p>
               {location && <p className="mt-0.5 text-xs text-muted-foreground">{SOURCE_LABEL[location.source]}</p>}
             </div>
             <button onClick={locateMe}
-              className="flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-sm text-muted-foreground">
+              className="flex shrink-0 items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-muted-foreground">
               <LocateFixed className="size-4" /> 현재 위치
             </button>
           </div>
           {locationNotice && <p className="mt-2 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">{locationNotice}</p>}
         </section>
 
-        {/* 3. Memo (optional) */}
+        {/* 3. Memo (optional, collapsed by default) */}
         <section aria-labelledby="memo-title">
-          <SectionTitle id="memo-title" title="메모" meta={`${memo.length}/${MEMO_MAX_LENGTH}`} />
-          <textarea
-            value={memo}
-            onChange={(e) => setMemo(e.target.value.slice(0, MEMO_MAX_LENGTH))}
-            rows={3}
-            placeholder="예) 편의점 앞 횡단보도 옆, 가운데 금이 가 있어요"
-            className="w-full resize-none rounded-xl border p-3 text-base outline-none focus:border-primary"
+          <SectionTitle
+            id="memo-title"
+            title="메모"
+            count={`${memo.length}/${MEMO_MAX_LENGTH}`}
+            right={
+              <button
+                type="button"
+                onClick={() => setMemoOpen((o) => !o)}
+                aria-expanded={memoOpen}
+                aria-controls="memo-panel"
+                aria-label={memoOpen ? "메모 닫기" : "메모 열기"}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted"
+              >
+                <ChevronDown className={cn("size-5 transition-transform duration-200", memoOpen && "rotate-180")} />
+              </button>
+            }
           />
-          <p className="mt-1 text-xs text-muted-foreground">선택 사항이에요. 메모는 제보와 함께 공개되니 개인정보는 적지 말아주세요.</p>
+          {/* grid-rows 0fr→1fr animates height without measuring */}
+          <div
+            id="memo-panel"
+            className={cn(
+              "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
+              memoOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+            )}
+          >
+            <div className="overflow-hidden" inert={!memoOpen}>
+              <textarea
+                value={memo}
+                onChange={(e) => setMemo(e.target.value.slice(0, MEMO_MAX_LENGTH))}
+                rows={3}
+                placeholder="예) 편의점 앞 횡단보도 옆, 가운데 금이 가 있어요"
+                aria-label="메모"
+                className="mt-1 w-full resize-none rounded-lg border p-3 text-base outline-none focus:border-primary"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">메모는 제보와 함께 공개되니 개인정보는 적지 말아주세요.</p>
+            </div>
+          </div>
         </section>
 
         <div className="flex gap-3 rounded-2xl bg-muted p-4 text-sm leading-relaxed text-muted-foreground">
@@ -442,13 +483,35 @@ export function ReportForm() {
   );
 }
 
-function SectionTitle({ id, title, required, meta }: { id: string; title: string; required?: boolean; meta?: string }) {
+function SectionTitle({
+  id, title, required, done, count, right,
+}: {
+  id: string;
+  title: string;
+  required?: boolean;
+  /** Field is filled → pink check badge next to the label. */
+  done?: boolean;
+  /** Shown right after the label, e.g. "0/200". */
+  count?: string;
+  right?: ReactNode;
+}) {
   return (
-    <div className="mb-2 flex items-baseline justify-between">
-      <h2 id={id} className="font-bold">
-        {title} {required ? <span className="text-primary">*</span> : <span className="text-xs font-normal text-muted-foreground">(선택)</span>}
+    <div className="mb-1 flex min-h-7 items-center justify-between gap-2">
+      <h2 id={id} className="flex items-center gap-1.5 font-bold">
+        {title}
+        {required && <span className="text-primary" aria-hidden>*</span>}
+        {count && <span className="text-xs font-normal text-muted-foreground tabular-nums">{count}</span>}
+        {done && (
+          <span
+            role="img"
+            aria-label="입력 완료"
+            className="flex size-5 animate-in items-center justify-center rounded-full bg-primary text-white duration-200 zoom-in-50"
+          >
+            <Check className="size-3.5" strokeWidth={3} />
+          </span>
+        )}
       </h2>
-      {meta && <span className="text-xs text-muted-foreground tabular-nums">{meta}</span>}
+      {right}
     </div>
   );
 }

@@ -5,7 +5,7 @@ export function PrimaryButton({ className, ...props }: React.ComponentProps<"but
     <button
       {...props}
       className={cn(
-        "h-14 w-full rounded-full bg-primary text-lg font-bold text-white transition disabled:bg-primary/35",
+        "h-14 w-full rounded-lg bg-primary text-lg font-bold text-white transition disabled:bg-primary/35",
         className,
       )}
     />

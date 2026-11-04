@@ -35,7 +35,7 @@ export default function LookupPage() {
           className="mt-2 h-12 w-full rounded-xl border px-4 text-base uppercase outline-none focus:border-primary"
         />
         {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
-        <button className="mt-6 h-14 w-full rounded-full bg-primary text-lg font-bold text-white">조회하기</button>
+        <button className="mt-6 h-14 w-full rounded-lg bg-primary text-lg font-bold text-white">조회하기</button>
       </form>
     </main>
   );

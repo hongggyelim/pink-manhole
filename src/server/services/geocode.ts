@@ -24,26 +24,57 @@ export function normalizeSido(raw: string | undefined | null): string | null {
   return raw.slice(0, 2);
 }
 
-/** Reverse geocoding via Kakao Local REST API. Returns nulls on failure (never throws). */
+async function kakao(path: string, key: string) {
+  const res = await fetch(`https://dapi.kakao.com/v2/local/geo/${path}`, {
+    headers: { Authorization: `KakaoAK ${key}` },
+    signal: AbortSignal.timeout(4000),
+  });
+  if (!res.ok) {
+    // Surface misconfiguration (wrong key, Local API disabled, quota) instead of failing silently.
+    console.error(`[geocode] Kakao ${path.split("?")[0]} → HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    return null;
+  }
+  return res.json();
+}
+
+let warnedMissingKey = false;
+
+/**
+ * Reverse geocoding via Kakao Local REST API. Never throws.
+ * 1) coord2address → road / lot address. 2) If the point has no address (mountain, sea,
+ * open land), coord2regioncode → the legal-dong name, so the user still sees a place name.
+ */
 export async function reverseGeocode(lat: number, lng: number): Promise<GeocodeResult> {
   const key = process.env.KAKAO_REST_API_KEY;
-  if (!key) return EMPTY;
+  if (!key) {
+    if (!warnedMissingKey) {
+      console.error("[geocode] KAKAO_REST_API_KEY is not set — every location will be saved without an address.");
+      warnedMissingKey = true;
+    }
+    return EMPTY;
+  }
   try {
-    const res = await fetch(
-      `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lng}&y=${lat}`,
-      { headers: { Authorization: `KakaoAK ${key}` }, signal: AbortSignal.timeout(4000) },
-    );
-    if (!res.ok) return EMPTY;
-    const data = await res.json();
-    const doc = data.documents?.[0];
-    if (!doc) return EMPTY;
+    const data = await kakao(`coord2address.json?x=${lng}&y=${lat}`, key);
+    const doc = data?.documents?.[0];
+    if (doc) {
+      return {
+        address: doc.address?.address_name ?? null,
+        roadAddress: doc.road_address?.address_name ?? null,
+        sido: normalizeSido(doc.address?.region_1depth_name),
+        sigungu: doc.address?.region_2depth_name || null,
+      };
+    }
+    const region = await kakao(`coord2regioncode.json?x=${lng}&y=${lat}`, key);
+    const r = region?.documents?.find((d: { region_type: string }) => d.region_type === "B") ?? region?.documents?.[0];
+    if (!r) return EMPTY;
     return {
-      address: doc.address?.address_name ?? null,
-      roadAddress: doc.road_address?.address_name ?? null,
-      sido: normalizeSido(doc.address?.region_1depth_name),
-      sigungu: doc.address?.region_2depth_name || null,
+      address: r.address_name ?? null,
+      roadAddress: null,
+      sido: normalizeSido(r.region_1depth_name),
+      sigungu: r.region_2depth_name || null,
     };
-  } catch {
+  } catch (e) {
+    console.error("[geocode] request failed", e);
     return EMPTY;
   }
 }

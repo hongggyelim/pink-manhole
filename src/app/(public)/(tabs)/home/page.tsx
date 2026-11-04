@@ -96,7 +96,7 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
     return (
       <div className="px-4 py-16 text-center">
         <p className="text-sm text-muted-foreground">{sido ? `${sido} 지역에 ` : ""}아직 제보가 없어요.</p>
-        <Link href={Route.Report} className="mt-4 inline-block rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white">
+        <Link href={Route.Report} className="mt-4 inline-block rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white">
           첫 제보하기
         </Link>
       </div>
