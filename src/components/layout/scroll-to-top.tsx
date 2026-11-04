@@ -10,7 +10,12 @@ import { Route } from "@/shared/routes";
 const EXCLUDED = [Route.Map];
 /** Show once the top header (56px) plus some content has scrolled out of view. */
 const SHOW_AFTER_PX = 240;
-const TAB_PAGES = [Route.Home, Route.Stats, Route.More];
+/**
+ * Pages with something fixed at the bottom (tab bar, report submit bar). They all share ONE
+ * offset — tall enough to clear the taller of the two (the submit bar) — so the button sits
+ * in the same spot on home, report, stats and more.
+ */
+const RAISED_PAGES = [Route.Home, Route.Report, Route.Stats, Route.More];
 
 /**
  * Floating "back to top" button. Fades/slides in after scrolling down and sits above
@@ -34,11 +39,10 @@ export function ScrollToTop() {
   if (excluded) return null;
 
   const isAdmin = pathname.startsWith(Route.Admin);
-  const bottom = TAB_PAGES.some((p) => pathname.startsWith(p))
-    ? "bottom-[calc(5rem+env(safe-area-inset-bottom))]" // above the 4rem tab bar
-    : pathname === Route.Report
-      ? "bottom-[calc(7.5rem+env(safe-area-inset-bottom))]" // above the sticky submit bar
-      : "bottom-[calc(1.25rem+env(safe-area-inset-bottom))]";
+  const raised = RAISED_PAGES.some((p) => pathname === p);
+  const bottom = raised
+    ? "bottom-[calc(7.5rem+env(safe-area-inset-bottom))]"
+    : "bottom-[calc(1.25rem+env(safe-area-inset-bottom))]";
 
   function toTop() {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
