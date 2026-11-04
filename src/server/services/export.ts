@@ -19,7 +19,7 @@ export async function buildReportsWorkbook(
   opts: { siteUrl: string; exportedAt: string },
 ) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "분홍맨홀 관리자";
+  wb.creator = "분홍 맨홀 관리자";
 
   const ws = wb.addWorksheet("제보 목록", { views: [{ state: "frozen", ySplit: 1 }] });
   ws.columns = [

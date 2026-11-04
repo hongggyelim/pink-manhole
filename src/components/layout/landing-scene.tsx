@@ -49,6 +49,18 @@ export function LandingScene({ className }: { className?: string }) {
       <g clipPath="url(#ls-mhClip)"><rect x="55" y="225" width="160" height="70" fill="url(#ls-dots)"/></g>
       <ellipse cx="135" cy="259" rx="20" ry="8" fill="#f6a5c2" stroke="#c2386b" strokeWidth="2.5"/>
       <path d="M92 236 Q 112 228 132 227" stroke="#fff" strokeOpacity=".45" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      {/* cracks (flattened to the cover's perspective) + a chipped, broken-through spot */}
+      <g stroke="#7d2445" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <path d="M147 254 L160 249 L171 251 L183 244 L196 246 L214 240 L229 243" strokeWidth="2.2" />
+        <path d="M183 244 L189 236 L201 232" strokeWidth="1.6" />
+        <path d="M171 251 L176 260 L190 266 L198 276" strokeWidth="1.8" />
+        <path d="M124 264 L112 270 L104 268 L90 276 L80 274 L66 281" strokeWidth="2" />
+        <path d="M104 268 L101 280 L92 288" strokeWidth="1.5" />
+        <path d="M137 266 L141 276 L137 286 L141 296" strokeWidth="1.6" />
+      </g>
+      <path d="M196 263 L205 258 L216 260 L220 266 L212 271 L201 270 Z" fill="#a92c58" />
+      <path d="M199 264 L206 260.5 L214 262 L216.5 266 L210.5 269 L202.5 268.5 Z" fill="#1a0f13" />
+      <path d="M206 260.5 L214 262 L209 264.5 Z" fill="#c2386b" />
 
       {/* cloud speech bubble */}
       <g className="ls-float" filter="url(#ls-soft)">

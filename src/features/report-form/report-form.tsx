@@ -60,6 +60,7 @@ export function ReportForm() {
   // Keep the uploaded draft so a retry after a failed create skips re-uploading.
   const uploadedDraft = useRef<string | null>(null);
   const geocodeCtrl = useRef<AbortController | null>(null);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
   const locationRef = useRef(location);
   useEffect(() => {
     locationRef.current = location;
@@ -116,6 +117,21 @@ export function ReportForm() {
     setResults(null);
     setQuery("");
   }
+
+  // The results list overlays the page; close it on an outside tap or Escape.
+  useEffect(() => {
+    if (!results) return;
+    const onDown = (e: PointerEvent) => {
+      if (!searchBoxRef.current?.contains(e.target as Node)) setResults(null);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setResults(null);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [results]);
 
   /* ── Photos ───────────────────────────────────────────────────────────── */
 
@@ -259,7 +275,20 @@ export function ReportForm() {
         {/* 1. Photos */}
         <section aria-labelledby="photos-title">
           <SectionTitle id="photos-title" title="사진" required meta={`${photos.length}/${MAX_PHOTOS}`} />
-          <div className="grid grid-cols-3 gap-2">
+          <p className="mb-3 text-sm text-muted-foreground">맨홀의 상태와 위치를 알 수 있는 사진을 올려주세요.</p>
+          {remaining > 0 && (
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" disabled={busy} onClick={openCamera}
+                className="flex h-12 items-center justify-center gap-1.5 rounded-xl bg-primary font-semibold text-white disabled:opacity-50">
+                <Camera className="size-5" /> 카메라로 촬영
+              </button>
+              <button type="button" disabled={busy} onClick={() => albumInputRef.current?.click()}
+                className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-pink-soft/40 font-semibold text-primary disabled:opacity-50">
+                <ImageIcon className="size-5" /> 앨범에서 선택
+              </button>
+            </div>
+          )}
+          <div className={cn("grid grid-cols-3 gap-2", remaining > 0 && (photos.length > 0 || busy) && "mt-3")}>
             {photos.map((p) => (
               <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
                 <img src={p.previewUrl} alt="" className="size-full object-cover" />
@@ -275,18 +304,6 @@ export function ReportForm() {
               </div>
             )}
           </div>
-          {remaining > 0 && (
-            <div className={cn("grid grid-cols-2 gap-2", (photos.length > 0 || busy) && "mt-2")}>
-              <button type="button" disabled={busy} onClick={openCamera}
-                className="flex h-12 items-center justify-center gap-1.5 rounded-xl bg-primary font-semibold text-white disabled:opacity-50">
-                <Camera className="size-5" /> 카메라로 촬영
-              </button>
-              <button type="button" disabled={busy} onClick={() => albumInputRef.current?.click()}
-                className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-pink-soft/40 font-semibold text-primary disabled:opacity-50">
-                <ImageIcon className="size-5" /> 앨범에서 선택
-              </button>
-            </div>
-          )}
           {photoError && <p className="mt-2 text-sm text-destructive">{photoError}</p>}
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
             사진은 관리자 검토 전까지 흐리게 공개돼요. 얼굴·차량 번호판이 나오지 않게 찍어주세요. (JPG·PNG·WebP, 장당 10MB 이하)
@@ -296,6 +313,7 @@ export function ReportForm() {
         {/* 2. Location */}
         <section aria-labelledby="location-title">
           <SectionTitle id="location-title" title="위치" required />
+          <div ref={searchBoxRef} className="relative">
           <form onSubmit={runSearch} className="flex items-center gap-2 rounded-xl border px-3 focus-within:border-primary">
             <Search className="size-4 shrink-0 text-muted-foreground" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="주소 또는 장소 검색"
@@ -310,7 +328,7 @@ export function ReportForm() {
             </button>
           </form>
           {results && (
-            <ul className="mt-2 max-h-56 divide-y overflow-y-auto rounded-xl border">
+            <ul className="absolute inset-x-0 top-full z-30 mt-2 max-h-56 divide-y overflow-y-auto rounded-xl border bg-white shadow-lg">
               {results.length === 0 && <li className="p-3 text-sm text-muted-foreground">검색 결과가 없어요.</li>}
               {results.map((r) => (
                 <li key={`${r.lat},${r.lng},${r.name}`}>
@@ -322,8 +340,9 @@ export function ReportForm() {
               ))}
             </ul>
           )}
+          </div>
 
-          <div className="mt-2 overflow-hidden rounded-xl border">
+          <div className="isolate mt-2 overflow-hidden rounded-xl border">
             <MapView
               controllerRef={mapRef}
               className="h-60"

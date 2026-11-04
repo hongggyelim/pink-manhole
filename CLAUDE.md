@@ -6,9 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-분홍맨홀 (pink-manhole): a mobile-first responsive web app where citizens report pink manholes with photos and a location. All reports are public. No sign-up is needed to report. It runs on free tiers only (Vercel Hobby, Supabase Free, GitHub).
+분홍 맨홀 (pink-manhole): a mobile-first responsive web app where citizens report pink manholes with photos and a location. All reports are public. No sign-up is needed to report. It runs on free tiers only (Vercel Hobby, Supabase Free, GitHub).
 
 Current scope is **data collection only**. Submitting to 국민신문고 is out of scope for now, but the `submitted` status is kept for later.
+
+## Copy conventions
+
+- Always write the service name with a space: **"분홍 맨홀"**, never "분홍맨홀". This applies to every user-facing string, title, metadata entry, file name and doc. Code identifiers such as `pink-manhole` are not affected.
+- Use correct Korean word spacing in UI copy (e.g. "알 수 있는", not "알수있는").
 
 ## Commands
 

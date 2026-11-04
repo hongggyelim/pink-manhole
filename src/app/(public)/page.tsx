@@ -38,7 +38,7 @@ export default function LandingPage() {
           href="/about"
           className="mt-3 flex items-center justify-center gap-1 text-sm text-white/80 [@media(max-height:700px)]:mt-1"
         >
-          분홍맨홀에 대해 알아보기 <ChevronRight className="size-4" />
+          분홍 맨홀에 대해 알아보기 <ChevronRight className="size-4" />
         </Link>
       </div>
     </main>

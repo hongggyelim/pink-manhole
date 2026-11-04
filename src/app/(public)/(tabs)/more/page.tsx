@@ -5,7 +5,7 @@ import { Logo } from "@/components/layout/logo";
 export const metadata = { title: "더보기" };
 
 const MENU = [
-  { href: "/about", label: "분홍맨홀이 위험한 이유", icon: Info },
+  { href: "/about", label: "분홍 맨홀이 위험한 이유", icon: Info },
   { href: "/stats", label: "제보 현황", icon: BarChart3 },
   { href: "/lookup", label: "조회번호로 찾기", icon: FileSearch },
   { href: "/faq", label: "자주 묻는 질문", icon: MessageCircleQuestion },

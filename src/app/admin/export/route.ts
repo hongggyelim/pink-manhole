@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
   }).format(now);
   const file = await buildReportsWorkbook(reports, filters, { siteUrl: req.nextUrl.origin, exportedAt: stamp });
-  const filename = `분홍맨홀_제보_${stamp.replace(/[-: ]/g, "").slice(0, 12)}.xlsx`;
+  const filename = `분홍 맨홀_제보_${stamp.replace(/[-: ]/g, "").slice(0, 12)}.xlsx`;
 
   return new NextResponse(new Uint8Array(file), {
     headers: {

@@ -52,7 +52,7 @@ function Banner({ count }: { count: number | null }) {
       <p className="text-[17px] leading-snug font-bold">
         지금까지
         <br />
-        <span className="text-primary">{count === null ? "…" : count.toLocaleString()}개</span>의 분홍맨홀이
+        <span className="text-primary">{count === null ? "…" : count.toLocaleString()}개</span>의 분홍 맨홀이
         <br />
         제보되었어요!
       </p>
