@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { PUBLIC_REPORT_COLUMNS, SIDO_LIST } from "@/shared/constants";
 import type { MapPoint, PublicReport } from "@/shared/types";
 import { ReportListItem } from "./report-list-item";
+import { Route, routes, withQuery } from "@/shared/routes";
 
 const KOREA = { lat: 36.2, lng: 127.9, level: 13 };
 
@@ -34,7 +35,7 @@ export function MapExplorer({ points }: { points: MapPoint[] }) {
     setSido(name);
     const s = SIDO_LIST.find((x) => x.name === name);
     mapRef.current?.panTo(s ?? KOREA, s?.level ?? KOREA.level);
-    router.replace(name ? `/map?sido=${encodeURIComponent(name)}` : "/map", { scroll: false });
+    router.replace(withQuery(Route.Map, { sido: name }), { scroll: false });
   }
 
   // Load the list when the sheet opens (public read via RLS).
@@ -80,7 +81,7 @@ export function MapExplorer({ points }: { points: MapPoint[] }) {
         initialLevel={initialLevel}
         cluster
         points={points}
-        onPointClick={(p) => router.push(`/reports/${p.reportNo}`)}
+        onPointClick={(p) => router.push(routes.reportDetail(p.reportNo))}
         showControls
       >
         <button

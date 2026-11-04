@@ -1,4 +1,5 @@
 import { MapPin } from "lucide-react";
+import { Route, withQuery } from "@/shared/routes";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -102,7 +103,7 @@ async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["pa
         <h2 className="text-lg font-bold">주변 신고 현황</h2>
         <p className="mt-1 text-sm text-muted-foreground">이 위치에서 총 {nearby}건의 제보가 접수되었어요.</p>
         <Link
-          href={`/map?lat=${report.lat}&lng=${report.lng}`}
+          href={withQuery(Route.Map, { lat: report.lat, lng: report.lng })}
           className="mt-4 flex h-12 items-center justify-center rounded-xl bg-pink-soft font-semibold text-primary"
         >
           유사한 위치 보기

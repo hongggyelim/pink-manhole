@@ -3,6 +3,7 @@
 import { CircleCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Route, withQuery } from "@/shared/routes";
 
 /** Shows "등록이 완료되었습니다" after a submission redirect (/home?submitted=1), then cleans the URL. */
 export function SubmittedToast() {
@@ -19,7 +20,7 @@ export function SubmittedToast() {
       setVisible(true);
       const params = new URLSearchParams(window.location.search);
       params.delete("submitted");
-      router.replace(params.size ? `/home?${params}` : "/home", { scroll: false });
+      router.replace(withQuery(Route.Home, Object.fromEntries(params)), { scroll: false });
     }, 0);
     return () => clearTimeout(t);
   }, [submitted, router]);

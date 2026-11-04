@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { Route } from "@/shared/routes";
 
 /**
  * Runs only for /admin/*: refreshes the Supabase session cookie and sends
@@ -26,9 +27,9 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isLogin = request.nextUrl.pathname === "/admin/login";
+  const isLogin = request.nextUrl.pathname === Route.AdminLogin;
   if (!user && !isLogin) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return NextResponse.redirect(new URL(Route.AdminLogin, request.url));
   }
   return response;
 }

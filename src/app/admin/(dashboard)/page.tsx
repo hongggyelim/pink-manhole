@@ -11,6 +11,7 @@ import {
 import { REPORT_STATUSES } from "@/shared/constants";
 import { formatDate } from "@/shared/format";
 import type { AdminReport } from "@/shared/types";
+import { Route, routes, withQuery } from "@/shared/routes";
 
 export const metadata = { title: "제보 목록" };
 
@@ -22,14 +23,16 @@ const VIEWS: { key: AdminView; label: string }[] = [
   { key: "deleted", label: "삭제" },
 ];
 
-function query(f: AdminListFilters, patch: Partial<Record<keyof AdminListFilters, string | number | undefined>> = {}) {
-  const merged = { ...f, ...patch } as Record<string, string | number | undefined>;
-  const p = new URLSearchParams();
-  for (const [k, v] of Object.entries(merged)) {
-    if (v === undefined || v === "" || (k === "view" && v === "all") || (k === "page" && v === 1)) continue;
-    p.set(k, String(v));
-  }
-  return p.size ? `?${p}` : "";
+/** Current filters + overrides as query params; defaults (view=all, page=1) are omitted. */
+function filterParams(f: AdminListFilters, patch: Partial<Record<keyof AdminListFilters, string | number | undefined>> = {}) {
+  const merged = { ...f, ...patch };
+  return {
+    view: merged.view === "all" ? undefined : merged.view,
+    q: merged.q,
+    sido: merged.sido,
+    status: merged.status,
+    page: merged.page === 1 ? undefined : merged.page,
+  };
 }
 
 export default function AdminHome({ searchParams }: PageProps<"/admin">) {
@@ -49,12 +52,12 @@ async function Stats() {
   const { supabase } = await requireAdminPage();
   const s = await getAdminStats(supabase);
   const cards = [
-    { label: "전체 제보", value: s.total, href: "/admin" },
-    { label: "사진 검토 대기", value: s.pendingPhotos, href: "/admin/photos", accent: s.pendingPhotos > 0 },
-    { label: "검토중 제보", value: s.reviewing, href: "/admin?status=reviewing" },
-    { label: "민원 접수", value: s.submitted, href: "/admin?status=submitted" },
-    { label: "비공개", value: s.hidden, href: "/admin?view=hidden" },
-    { label: "삭제", value: s.deleted, href: "/admin?view=deleted" },
+    { label: "전체 제보", value: s.total, href: Route.Admin },
+    { label: "사진 검토 대기", value: s.pendingPhotos, href: Route.AdminPhotos, accent: s.pendingPhotos > 0 },
+    { label: "검토중 제보", value: s.reviewing, href: withQuery(Route.Admin, { status: "reviewing" }) },
+    { label: "민원 접수", value: s.submitted, href: withQuery(Route.Admin, { status: "submitted" }) },
+    { label: "비공개", value: s.hidden, href: withQuery(Route.Admin, { view: "hidden" }) },
+    { label: "삭제", value: s.deleted, href: withQuery(Route.Admin, { view: "deleted" }) },
   ];
   return (
     <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-6">
@@ -101,7 +104,7 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
     <section className="mt-6">
       <nav className="flex w-full rounded-lg border bg-white p-1 sm:w-fit">
         {VIEWS.map((v) => (
-          <Link key={v.key} href={`/admin${query(f, { view: v.key, page: 1 })}`}
+          <Link key={v.key} href={withQuery(Route.Admin, filterParams(f, { view: v.key, page: 1 }))}
             className={cn("flex-1 rounded-md px-3 py-1.5 text-center text-sm font-medium sm:flex-none",
               f.view === v.key ? "bg-navy text-white" : "text-muted-foreground hover:bg-muted")}>
             {v.label}
@@ -110,12 +113,12 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
       </nav>
 
       {/* key: remount when the URL changes so the search box reflects it */}
-      <FilterBar key={query(f, { page: undefined })} filters={f} />
+      <FilterBar key={withQuery(Route.Admin, filterParams(f, { page: undefined }))} filters={f} />
 
       <div className="mt-4 mb-2 flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">{count.toLocaleString()}건</p>
         <a
-          href={`/admin/export${query(f, { page: undefined })}`}
+          href={withQuery(Route.AdminExport, filterParams(f, { page: undefined }))}
           download
           aria-disabled={count === 0}
           className={cn(
@@ -135,7 +138,7 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
       <ul className="space-y-2 md:hidden">
         {reports.map((r) => (
           <li key={r.id}>
-            <Link href={`/admin/reports/${r.id}`} className="flex gap-3 rounded-xl border bg-white p-3">
+            <Link href={routes.adminReport(r.id)} className="flex gap-3 rounded-xl border bg-white p-3">
               <div className="size-16 shrink-0 overflow-hidden rounded-lg bg-muted">{thumb(r)}</div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
@@ -166,7 +169,7 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
             </thead>
             <tbody className="divide-y">
               {reports.map((r) => {
-                const link = `/admin/reports/${r.id}`;
+                const link = routes.adminReport(r.id);
                 return (
                   <tr key={r.id} className="hover:bg-neutral-50">
                     <td className="p-2">
@@ -191,9 +194,9 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
 
       {pages > 1 && (
         <div className="mt-4 flex items-center justify-center gap-3 text-sm">
-          {f.page > 1 && <Link href={`/admin${query(f, { page: f.page - 1 })}`} className="rounded-lg border bg-white px-3 py-1.5">이전</Link>}
+          {f.page > 1 && <Link href={withQuery(Route.Admin, filterParams(f, { page: f.page - 1 }))} className="rounded-lg border bg-white px-3 py-1.5">이전</Link>}
           <span className="tabular-nums">{f.page} / {pages}</span>
-          {f.page < pages && <Link href={`/admin${query(f, { page: f.page + 1 })}`} className="rounded-lg border bg-white px-3 py-1.5">다음</Link>}
+          {f.page < pages && <Link href={withQuery(Route.Admin, filterParams(f, { page: f.page + 1 }))} className="rounded-lg border bg-white px-3 py-1.5">다음</Link>}
         </div>
       )}
     </section>

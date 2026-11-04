@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { Route } from "./src/shared/routes";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -6,7 +7,7 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // The report flow used to be 3 pages; it is now a single page at /report.
   async redirects() {
-    return [{ source: "/report/:step(photo|location|confirm|complete)", destination: "/report", permanent: true }];
+    return [{ source: `${Route.Report}/:step(photo|location|confirm|complete)`, destination: Route.Report, permanent: true }];
   },
   turbopack: {
     rules: {

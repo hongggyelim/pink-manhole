@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { WeeklyChart } from "@/features/reports/weekly-chart";
 import { REPORT_STATUSES, type ReportStatus } from "@/shared/constants";
 import { getStats } from "@/server/services/reports";
+import { Route } from "@/shared/routes";
 
 export const metadata = { title: "통계" };
 
@@ -11,7 +12,7 @@ export default function StatsPage() {
   return (
     <main className="px-4 pb-8">
       <h1 className="flex h-14 items-center text-lg font-bold">제보 현황</h1>
-      <Link href="/about" className="mb-5 flex items-center gap-2 rounded-xl bg-muted px-4 py-3 text-sm">
+      <Link href={Route.About} className="mb-5 flex items-center gap-2 rounded-xl bg-muted px-4 py-3 text-sm">
         <span className="flex-1 leading-snug break-keep text-muted-foreground">
           모인 제보는 지역별로 정리해 지자체에 개선을 요청하는 데 사용돼요.
         </span>

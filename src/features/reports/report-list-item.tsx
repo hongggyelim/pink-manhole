@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { routes } from "@/shared/routes";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { REPORT_STATUSES } from "@/shared/constants";
@@ -10,7 +11,7 @@ export function ReportListItem({ report }: { report: PublicReport }) {
   const first = report.report_photos[0];
   const photo = first ? publicPhoto(first) : null;
   return (
-    <Link href={`/reports/${report.report_no}`} className="flex items-center gap-3 py-3">
+    <Link href={routes.reportDetail(report.report_no)} className="flex items-center gap-3 py-3">
       <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
         {photo?.thumb && <img src={photo.thumb} alt="" className="size-full object-cover" loading="lazy" />}
         {photo?.blurred && (

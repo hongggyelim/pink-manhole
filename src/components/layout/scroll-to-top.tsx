@@ -4,12 +4,13 @@ import { ChevronUp } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Route } from "@/shared/routes";
 
 /** Pages where the button never shows (the map is a fixed, non-scrolling view). */
-const EXCLUDED = ["/map"];
+const EXCLUDED = [Route.Map];
 /** Show once the top header (56px) plus some content has scrolled out of view. */
 const SHOW_AFTER_PX = 240;
-const TAB_PAGES = ["/home", "/stats", "/more"];
+const TAB_PAGES = [Route.Home, Route.Stats, Route.More];
 
 /**
  * Floating "back to top" button. Fades/slides in after scrolling down and sits above
@@ -32,10 +33,10 @@ export function ScrollToTop() {
 
   if (excluded) return null;
 
-  const isAdmin = pathname.startsWith("/admin");
+  const isAdmin = pathname.startsWith(Route.Admin);
   const bottom = TAB_PAGES.some((p) => pathname.startsWith(p))
     ? "bottom-[calc(5rem+env(safe-area-inset-bottom))]" // above the 4rem tab bar
-    : pathname === "/report"
+    : pathname === Route.Report
       ? "bottom-[calc(7.5rem+env(safe-area-inset-bottom))]" // above the sticky submit bar
       : "bottom-[calc(1.25rem+env(safe-area-inset-bottom))]";
 

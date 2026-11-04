@@ -2,6 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { Route } from "@/shared/routes";
 
 export type AdminContext =
   | { state: "anon" }
@@ -26,8 +27,8 @@ export const getAdminContext = cache(async (): Promise<AdminContext> => {
 /** For admin pages: redirect if signed out; non-admins are handled by the layout gate. */
 export async function requireAdminPage() {
   const ctx = await getAdminContext();
-  if (ctx.state === "anon") redirect("/admin/login");
-  if (ctx.state !== "admin") redirect("/admin/forbidden");
+  if (ctx.state === "anon") redirect(Route.AdminLogin);
+  if (ctx.state !== "admin") redirect(Route.AdminForbidden);
   return ctx;
 }
 

@@ -4,6 +4,7 @@ import { Loader2, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { REPORT_STATUSES, SIDO_LIST } from "@/shared/constants";
+import { Route, withQuery } from "@/shared/routes";
 
 type Filters = { view: string; q?: string; sido?: string; status?: string };
 
@@ -23,7 +24,7 @@ export function FilterBar({ filters }: { filters: Filters }) {
     if (next.q) p.set("q", next.q);
     if (next.sido) p.set("sido", next.sido);
     if (next.status) p.set("status", next.status);
-    start(() => router.push(p.size ? `/admin?${p}` : "/admin", { scroll: false })); // page resets to 1
+    start(() => router.push(withQuery(Route.Admin, Object.fromEntries(p)), { scroll: false })); // page resets to 1
   }
 
   const active = Boolean(filters.q || filters.sido || filters.status);

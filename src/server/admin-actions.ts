@@ -7,6 +7,7 @@ import { REPORT_STATUSES } from "@/shared/constants";
 import { adminPhotoDecisionSchema, adminReportIdSchema } from "@/shared/schemas";
 import { ForbiddenError, requireAdminAction } from "./auth";
 import { syncReportFiles } from "./services/photo-files";
+import { Route } from "@/shared/routes";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -36,13 +37,13 @@ export async function signIn(_prev: string | null, formData: FormData): Promise<
     await supabase.auth.signOut();
     return "관리자 권한이 없는 계정이에요.";
   }
-  redirect("/admin");
+  redirect(Route.Admin);
 }
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/admin/login");
+  redirect(Route.AdminLogin);
 }
 
 /* ── Moderation (DB function does the change + activity log atomically; then files are synced) ── */

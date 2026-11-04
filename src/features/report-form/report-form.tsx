@@ -14,6 +14,7 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { processPhoto, type ProcessedPhoto } from "./image";
 import { distanceMeters, lookupAddress, readPhotoGps } from "./photo-gps";
 import { PrimaryButton } from "./primary-button";
+import { ApiRoute, Route, withQuery } from "@/shared/routes";
 
 type DraftPhoto = ProcessedPhoto & { id: string; previewUrl: string };
 type LocationSource = "photo" | "search" | "current" | "map";
@@ -220,7 +221,7 @@ export function ReportForm() {
     try {
       let draftId = uploadedDraft.current;
       if (!draftId) {
-        const signRes = await fetch("/api/uploads", {
+        const signRes = await fetch(ApiRoute.Uploads, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ count: photos.length }),
@@ -240,7 +241,7 @@ export function ReportForm() {
         uploadedDraft.current = draftId = id;
       }
 
-      const res = await fetch("/api/reports", {
+      const res = await fetch(ApiRoute.Reports, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -253,7 +254,7 @@ export function ReportForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "제보 등록에 실패했어요.");
-      router.replace("/home?submitted=1");
+      router.replace(withQuery(Route.Home, { submitted: 1 }));
     } catch (e) {
       setSubmitError((e as Error).message || "제보 등록에 실패했어요.");
       setSubmitting(false);
@@ -264,7 +265,7 @@ export function ReportForm() {
 
   return (
     <main className="flex min-h-dvh flex-col">
-      <PageHeader title="신고하기" backHref="/home" />
+      <PageHeader title="신고하기" backHref={Route.Home} />
 
       <input ref={albumInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
         multiple hidden onChange={(e) => onFiles(e.target.files)} />

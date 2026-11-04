@@ -9,13 +9,14 @@ import { requireAdminPage } from "@/server/auth";
 import { getAdminPhotoUrls, getAdminReport } from "@/server/services/admin";
 import { PHOTO_MODERATION, REPORT_STATUSES, type PhotoModeration, type ReportStatus } from "@/shared/constants";
 import { adminReportIdSchema } from "@/shared/schemas";
+import { Route, routes } from "@/shared/routes";
 
 export const metadata = { title: "제보 상세" };
 
 export default function AdminReportPage({ params }: PageProps<"/admin/reports/[id]">) {
   return (
     <>
-      <Link href="/admin" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link href={Route.Admin} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ChevronLeft className="size-4" /> 제보 목록
       </Link>
       <Suspense fallback={<p className="text-sm text-muted-foreground">불러오는 중…</p>}>
@@ -76,7 +77,7 @@ async function Detail({ params }: { params: PageProps<"/admin/reports/[id]">["pa
             {report.deleted_at && <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">삭제됨</span>}
             {report.is_hidden && !report.deleted_at && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">비공개</span>}
             {visible && (
-              <Link href={`/reports/${report.report_no}`} target="_blank" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
+              <Link href={routes.reportDetail(report.report_no)} target="_blank" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
                 공개 페이지 <ExternalLink className="size-3" />
               </Link>
             )}

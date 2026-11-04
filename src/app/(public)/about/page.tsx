@@ -2,6 +2,7 @@ import { Ban, Camera, Car, ExternalLink, Newspaper, ShieldAlert, TriangleAlert }
 import Link from "next/link";
 import { DamagedManholes } from "@/components/layout/damaged-manholes";
 import { PageHeader } from "@/components/layout/page-header";
+import { Route } from "@/shared/routes";
 
 export const metadata = { title: "분홍 맨홀에 대해 알아보기" };
 
@@ -128,7 +129,7 @@ export default function AboutPage() {
 
       <div className="px-5">
         <Link
-          href="/report"
+          href={Route.Report}
           className="mt-8 flex h-14 items-center justify-center rounded-full bg-primary text-lg font-bold text-white"
         >
           분홍 맨홀 제보하기

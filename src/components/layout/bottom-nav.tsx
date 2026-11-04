@@ -4,13 +4,14 @@ import { BarChart3, Camera, Ellipsis, House, Map } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Route } from "@/shared/routes";
 
 const TABS = [
-  { href: "/home", label: "홈", icon: House },
-  { href: "/map", label: "지도", icon: Map },
-  { href: "/report", label: "신고하기", icon: Camera, primary: true },
-  { href: "/stats", label: "통계", icon: BarChart3 },
-  { href: "/more", label: "더보기", icon: Ellipsis },
+  { href: Route.Home, label: "홈", icon: House },
+  { href: Route.Map, label: "지도", icon: Map },
+  { href: Route.Report, label: "신고하기", icon: Camera, primary: true },
+  { href: Route.Stats, label: "통계", icon: BarChart3 },
+  { href: Route.More, label: "더보기", icon: Ellipsis },
 ];
 
 export function BottomNav() {

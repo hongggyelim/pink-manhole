@@ -1,5 +1,6 @@
 "use client";
 
+import { ApiRoute, withQuery } from "@/shared/routes";
 import { KOREA_BOUNDS } from "@/shared/constants";
 import type { LatLng } from "@/features/map/map-view";
 
@@ -36,7 +37,7 @@ export type GeocodeOutcome = { state: "ok"; address: string | null } | { state: 
 
 /** Address for a point via our server proxy (keeps the Kakao REST key server-side). */
 export async function lookupAddress(p: LatLng, signal?: AbortSignal): Promise<GeocodeOutcome> {
-  const res = await fetch(`/api/geocode?lat=${p.lat}&lng=${p.lng}`, { signal });
+  const res = await fetch(withQuery(ApiRoute.Geocode, { lat: p.lat, lng: p.lng }), { signal });
   if (res.status === 400) return { state: "outside" };
   if (!res.ok) return { state: "ok", address: null };
   const data = await res.json();

@@ -1,5 +1,6 @@
 "use client";
 
+import { routes } from "@/shared/routes";
 import { ChevronLeft, ChevronRight, EyeOff, Check, X, ZoomIn, ZoomOut } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
@@ -80,7 +81,7 @@ export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided 
     <div role="dialog" aria-modal className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white">
       <div className="flex items-center gap-2 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 text-sm sm:gap-3 sm:px-4">
         <span className="tabular-nums text-white/70">{index + 1} / {items.length}</span>
-        <Link href={`/admin/reports/${item.reportId}`} className="font-mono font-semibold underline-offset-2 hover:underline">
+        <Link href={routes.adminReport(item.reportId)} className="font-mono font-semibold underline-offset-2 hover:underline">
           {item.reportNo}
         </Link>
         <span className="hidden truncate text-white/70 sm:inline">{item.address ?? "주소 없음"}</span>

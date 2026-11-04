@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Route } from "@/shared/routes";
 
 export function AdminNavLink({ href, children }: { href: string; children: ReactNode }) {
   const pathname = usePathname();
-  const active = href === "/admin" ? pathname === "/admin" || pathname.startsWith("/admin/reports") : pathname.startsWith(href);
+  const active = href === Route.Admin ? pathname === Route.Admin || pathname.startsWith(Route.AdminReports) : pathname.startsWith(href);
   return (
     <Link
       href={href}

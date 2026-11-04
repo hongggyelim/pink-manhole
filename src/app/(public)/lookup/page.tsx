@@ -1,5 +1,6 @@
 "use client";
 
+import { routes } from "@/shared/routes";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -17,7 +18,7 @@ export default function LookupPage() {
       setError("조회번호 형식을 확인해주세요. (예: PM-261103-7K3Q)");
       return;
     }
-    router.push(`/reports/${no}`);
+    router.push(routes.reportDetail(no));
   }
 
   return (
