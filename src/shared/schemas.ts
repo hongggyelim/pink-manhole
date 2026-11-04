@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { KOREA_BOUNDS, MAX_PHOTOS } from "./constants";
+import { KOREA_BOUNDS, MAX_PHOTOS, MEMO_MAX_LENGTH } from "./constants";
 
 export const latLngSchema = z.object({
   lat: z.number().min(KOREA_BOUNDS.minLat).max(KOREA_BOUNDS.maxLat),
@@ -13,6 +13,12 @@ export const signUploadSchema = z.object({
 export const createReportSchema = latLngSchema.extend({
   draftId: z.uuid(),
   photoCount: z.number().int().min(1).max(MAX_PHOTOS),
+  /** Optional location memo: control chars stripped, whitespace collapsed. */
+  memo: z
+    .string()
+    .transform((s) => s.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim())
+    .pipe(z.string().max(MEMO_MAX_LENGTH))
+    .optional(),
 });
 export type CreateReportInput = z.infer<typeof createReportSchema>;
 

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { href: "/home", label: "홈", icon: House },
   { href: "/map", label: "지도", icon: Map },
-  { href: "/report/photo", label: "신고하기", icon: Camera, primary: true },
+  { href: "/report", label: "신고하기", icon: Camera, primary: true },
   { href: "/stats", label: "통계", icon: BarChart3 },
   { href: "/more", label: "더보기", icon: Ellipsis },
 ];

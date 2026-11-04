@@ -69,7 +69,7 @@ export default function AboutPage() {
       </section>
       <div className="px-5">
         <Link
-          href="/report/photo"
+          href="/report"
           className="mt-8 flex h-14 items-center justify-center rounded-full bg-primary text-lg font-bold text-white"
         >
           분홍맨홀 제보하기

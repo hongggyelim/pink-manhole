@@ -83,6 +83,12 @@ async function Detail({ params }: { params: PageProps<"/admin/reports/[id]">["pa
           </div>
           <p className="mt-1 text-base sm:text-lg">{address ?? "주소 없음"}</p>
           {report.road_address && report.address && <p className="text-sm text-muted-foreground">{report.address}</p>}
+          {report.memo && (
+            <p className="mt-2 rounded-lg border bg-white px-3 py-2 text-sm whitespace-pre-line">
+              <span className="mr-1.5 text-xs font-semibold text-muted-foreground">메모</span>
+              {report.memo}
+            </p>
+          )}
           <p className="mt-1 text-xs text-muted-foreground">
             {report.lat.toFixed(6)}, {report.lng.toFixed(6)} · 등록 {fmt(report.created_at)}
           </p>

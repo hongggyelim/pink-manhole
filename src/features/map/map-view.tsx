@@ -34,6 +34,10 @@ type Props = {
   onPointClick?: (p: MapPoint) => void;
   onBubbleClick?: (b: RegionBubble) => void;
   onIdle?: (center: LatLng, level: number) => void;
+  /** Fires only when the USER drags the map (not on programmatic pans). */
+  onDragEnd?: (center: LatLng) => void;
+  /** Fires after the built-in "내 위치" control found the device location. */
+  onLocate?: (position: LatLng) => void;
   interactive?: boolean;
   showControls?: boolean;
   controllerRef?: Ref<MapController | null>;
@@ -73,6 +77,8 @@ export function MapView({
   onPointClick,
   onBubbleClick,
   onIdle,
+  onDragEnd,
+  onLocate,
   interactive = true,
   showControls = false,
   controllerRef,
@@ -84,14 +90,14 @@ export function MapView({
   const clustererRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const overlaysRef = useRef<any[]>([]);
-  const cb = useRef({ onPointClick, onBubbleClick, onIdle });
+  const cb = useRef({ onPointClick, onBubbleClick, onIdle, onDragEnd, onLocate });
   const [status, setStatus] = useState<
     "loading" | "ready" | "no-key" | "error"
   >("loading");
   const initial = useRef({ initialCenter, initialLevel, interactive, cluster });
 
   useEffect(() => {
-    cb.current = { onPointClick, onBubbleClick, onIdle };
+    cb.current = { onPointClick, onBubbleClick, onIdle, onDragEnd, onLocate };
   });
 
   useImperativeHandle(controllerRef, () => ({
@@ -140,6 +146,10 @@ export function MapView({
             { lat: ctr.getLat(), lng: ctr.getLng() },
             map.getLevel()
           );
+        });
+        kakao.maps.event.addListener(map, "dragend", () => {
+          const ctr = map.getCenter();
+          cb.current.onDragEnd?.({ lat: ctr.getLat(), lng: ctr.getLng() });
         });
         ro = new ResizeObserver(() => map.relayout());
         ro.observe(containerRef.current);
@@ -217,6 +227,7 @@ export function MapView({
         const map = mapRef.current;
         if (!map) return;
         map.setLevel(4);
+        cb.current.onLocate?.({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         map.panTo(
           new window.kakao.maps.LatLng(
             pos.coords.latitude,

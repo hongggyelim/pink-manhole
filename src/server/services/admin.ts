@@ -70,7 +70,7 @@ function filteredReports(db: SupabaseClient, f: Omit<AdminListFilters, "page">, 
   const term = f.q ? sanitizeSearch(f.q) : "";
   if (term) {
     const like = `%${term}%`;
-    q = q.or(`address.ilike.${like},road_address.ilike.${like},report_no.ilike.${like},sigungu.ilike.${like}`);
+    q = q.or(`address.ilike.${like},road_address.ilike.${like},report_no.ilike.${like},sigungu.ilike.${like},memo.ilike.${like}`);
   }
   return q;
 }

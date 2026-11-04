@@ -22,6 +22,7 @@ export type PublicReport = {
   road_address: string | null;
   sido: string | null;
   sigungu: string | null;
+  memo: string | null;
   created_at: string;
   report_photos: ReportPhoto[];
 };

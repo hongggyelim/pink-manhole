@@ -24,7 +24,7 @@ export default function LandingPage() {
 
       <div className="flex flex-col gap-3">
         <Link
-          href="/report/photo"
+          href="/report"
           className="flex h-14 items-center justify-center gap-2 rounded-full bg-primary text-lg font-bold shadow-lg shadow-primary/30"
         >
           <Camera className="size-5" /> 신고하기

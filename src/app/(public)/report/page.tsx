@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+import { ReportForm } from "@/features/report-form/report-form";
 
-export default function ReportIndex() {
-  redirect("/report/photo");
+export const metadata = { title: "신고하기" };
+
+export default function ReportPage() {
+  return <ReportForm />;
 }

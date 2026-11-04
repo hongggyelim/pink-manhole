@@ -41,7 +41,7 @@ export function FilterBar({ filters }: { filters: Filters }) {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="주소·조회번호·시군구 검색"
+          placeholder="주소·조회번호·시군구·메모 검색"
           enterKeyHint="search"
           className="h-10 w-full rounded-lg border bg-white pr-3 pl-9 text-base outline-none focus:border-primary sm:text-sm"
         />

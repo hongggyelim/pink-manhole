@@ -41,23 +41,48 @@ export type PlaceResult = {
   lng: number;
 };
 
-/** Keyword/address search for the location step (Kakao Places, client-side JS key). */
+/**
+ * Address + place search (Kakao JS SDK services). Exact address matches come first
+ * ("테헤란로 123", "서초동 1373"), then place keywords ("강남역 2번 출구").
+ */
 export async function searchPlaces(query: string): Promise<PlaceResult[]> {
   const kakao = await loadKakao();
-  return new Promise((resolve) => {
-    new kakao.maps.services.Places().keywordSearch(
-      query,
-      (data: any[], status: string) => {
-        if (status !== kakao.maps.services.Status.OK) return resolve([]);
-        resolve(
-          data.slice(0, 8).map((d) => ({
-            name: d.place_name,
-            address: d.road_address_name || d.address_name,
-            lat: Number(d.y),
-            lng: Number(d.x),
-          }))
-        );
-      }
-    );
+  const { Status } = kakao.maps.services;
+
+  const byAddress = new Promise<PlaceResult[]>((resolve) => {
+    new kakao.maps.services.Geocoder().addressSearch(query, (data: any[], status: string) => {
+      if (status !== Status.OK) return resolve([]);
+      resolve(
+        data.slice(0, 5).map((d) => ({
+          name: d.road_address?.address_name || d.address_name,
+          address: d.road_address ? d.address_name : "",
+          lat: Number(d.y),
+          lng: Number(d.x),
+        })),
+      );
+    });
   });
+
+  const byKeyword = new Promise<PlaceResult[]>((resolve) => {
+    new kakao.maps.services.Places().keywordSearch(query, (data: any[], status: string) => {
+      if (status !== Status.OK) return resolve([]);
+      resolve(
+        data.slice(0, 8).map((d) => ({
+          name: d.place_name,
+          address: d.road_address_name || d.address_name,
+          lat: Number(d.y),
+          lng: Number(d.x),
+        })),
+      );
+    });
+  });
+
+  const [a, k] = await Promise.all([byAddress, byKeyword]);
+  const seen = new Set<string>();
+  return [...a, ...k].filter((r) => {
+    const key = `${r.lat.toFixed(5)},${r.lng.toFixed(5)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 10);
 }

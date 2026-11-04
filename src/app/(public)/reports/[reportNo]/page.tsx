@@ -79,6 +79,9 @@ async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["pa
         {report.road_address && report.address && (
           <p className="mt-1 pl-6.5 text-sm text-muted-foreground">{report.address}</p>
         )}
+        {report.memo && (
+          <p className="mt-3 rounded-xl bg-muted px-4 py-3 text-sm leading-relaxed whitespace-pre-line">{report.memo}</p>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full bg-muted px-2.5 py-1">사용자 제보</span>
           <span className="rounded-full bg-muted px-2.5 py-1">{formatDate(report.created_at)}</span>

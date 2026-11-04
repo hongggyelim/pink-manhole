@@ -51,4 +51,4 @@ export type PhotoModeration = keyof typeof PHOTO_MODERATION;
 
 /** Columns for public report reads (RLS hides private photos / hidden / deleted reports). */
 export const PUBLIC_REPORT_COLUMNS =
-  "id, report_no, status, lat, lng, address, road_address, sido, sigungu, created_at, report_photos(id, storage_path, thumb_path, blur_path, width, height, sort_order, moderation_status)";
+  "id, report_no, status, lat, lng, address, road_address, sido, sigungu, memo, created_at, report_photos(id, storage_path, thumb_path, blur_path, width, height, sort_order, moderation_status)";

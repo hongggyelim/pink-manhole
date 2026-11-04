@@ -130,6 +130,7 @@ export async function createReport(input: CreateReportInput, meta: { ipHash: str
     p_photos: photos,
     p_ip_hash: meta.ipHash,
     p_user_agent: meta.userAgent,
+    p_memo: input.memo || null,
   });
   if (error) throw error;
 
