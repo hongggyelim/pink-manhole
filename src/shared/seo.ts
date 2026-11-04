@@ -20,7 +20,7 @@ export const DEFAULT_OG_IMAGE = {
   url: "/og/default.png",
   width: 1200,
   height: 630,
-  alt: "분홍색 맨홀을 발견하고 휴대폰으로 사진을 찍는 사람 — 분홍 맨홀 제보 서비스",
+  alt: "금이 간 분홍색 맨홀과 \"분홍색 맨홀을 발견하셨나요?\" 문구 — 분홍 맨홀 제보 서비스",
 };
 
 type OgImage = { url: string; width?: number; height?: number; alt?: string };
