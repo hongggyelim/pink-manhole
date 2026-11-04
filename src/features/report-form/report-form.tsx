@@ -431,6 +431,47 @@ export function ReportForm() {
             required
             done={location?.state === "ok"}
           />
+          <div className="mb-3 flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2.5">
+            <MapPin className="size-5 shrink-0 fill-primary text-primary [&>circle]:fill-white [&>circle]:stroke-white" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-medium">
+                {!location && (
+                  <span className="text-muted-foreground">
+                    아직 위치를 지정하지 않았어요
+                  </span>
+                )}
+                {location?.state === "loading" && "주소 확인 중…"}
+                {location?.state === "outside" && (
+                  <span className="text-destructive">
+                    대한민국 내 위치만 등록할 수 있어요.
+                  </span>
+                )}
+                {location?.state === "ok" &&
+                  (location.address ?? (
+                    <span className="tabular-nums">
+                      위도 {location.lat.toFixed(5)}, 경도{" "}
+                      {location.lng.toFixed(5)}
+                    </span>
+                  ))}
+              </p>
+              {location && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {SOURCE_LABEL[location.source]}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={locateMe}
+              className="flex shrink-0 items-center gap-1 rounded-lg border bg-white px-3 py-1.5 text-sm text-muted-foreground"
+            >
+              <LocateFixed className="size-4" /> 현재 위치
+            </button>
+          </div>
+          {locationNotice && (
+            <p className="-mt-1 mb-3 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+              {locationNotice}
+            </p>
+          )}
           <p className="mb-3 text-sm text-muted-foreground">
             주소를 검색하거나 지도에서 핀 위치를 설정해주세요.
           </p>
@@ -513,48 +554,6 @@ export function ReportForm() {
               </div>
             </MapView>
           </div>
-
-          <div className="mt-3 flex items-start gap-2">
-            <MapPin className="mt-0.5 size-5 shrink-0 fill-primary text-primary [&>circle]:fill-white [&>circle]:stroke-white" />
-            <div className="min-w-0 flex-1">
-              <p className="text-[15px] font-medium">
-                {!location && (
-                  <span className="text-muted-foreground">
-                    아직 위치를 지정하지 않았어요
-                  </span>
-                )}
-                {location?.state === "loading" && "주소 확인 중…"}
-                {location?.state === "outside" && (
-                  <span className="text-destructive">
-                    대한민국 내 위치만 등록할 수 있어요.
-                  </span>
-                )}
-                {location?.state === "ok" &&
-                  (location.address ?? (
-                    <span className="tabular-nums">
-                      위도 {location.lat.toFixed(5)}, 경도{" "}
-                      {location.lng.toFixed(5)}
-                    </span>
-                  ))}
-              </p>
-              {location && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {SOURCE_LABEL[location.source]}
-                </p>
-              )}
-            </div>
-            <button
-              onClick={locateMe}
-              className="flex shrink-0 items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-muted-foreground"
-            >
-              <LocateFixed className="size-4" /> 현재 위치
-            </button>
-          </div>
-          {locationNotice && (
-            <p className="mt-2 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
-              {locationNotice}
-            </p>
-          )}
         </section>
 
         {/* 3. Memo (optional, collapsed by default) */}
