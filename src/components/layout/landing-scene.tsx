@@ -12,6 +12,10 @@ export function LandingScene({ className }: { className?: string }) {
       aria-label="분홍색 맨홀을 발견하고 놀란 사람이 휴대폰으로 사진을 찍는 그림"
     >
       <defs>
+        <linearGradient id="ls-pave" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fff" stopOpacity=".06" />
+          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
         <radialGradient id="ls-mh" cx="45%" cy="40%" r="70%">
           <stop offset="0%" stopColor="#f9b3cb"/>
           <stop offset="100%" stopColor="#dc4a7f"/>
@@ -31,7 +35,7 @@ export function LandingScene({ className }: { className?: string }) {
       </defs>
 
       {/* pavement */}
-      <path d="M0 215 L360 205 L360 330 L0 330 Z" fill="#ffffff" opacity=".05"/>
+      <path d="M0 215 L360 205 L360 330 L0 330 Z" fill="url(#ls-pave)"/>
       <path d="M0 290 L360 280" stroke="#fff" strokeOpacity=".06" strokeWidth="2"/>
 
       {/* light cone from the flash */}
