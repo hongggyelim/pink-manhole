@@ -99,10 +99,13 @@ export async function setReportsDeleted(reportIds: string[], deleted: boolean): 
     const ids = [...new Set(bulkIdsSchema.parse(reportIds))];
     const flag = z.boolean().parse(deleted);
     const { supabase } = await requireAdminAction();
-    for (const id of ids) {
-      const { error } = await supabase.rpc("admin_set_deleted", { p_report_id: id, p_deleted: flag });
-      if (error) throw error;
-    }
-    await Promise.all(ids.map((id) => syncReportFiles(supabase, id)));
+    // Independent per-report transactions → run them in parallel, then sync each report's files.
+    await Promise.all(
+      ids.map(async (id) => {
+        const { error } = await supabase.rpc("admin_set_deleted", { p_report_id: id, p_deleted: flag });
+        if (error) throw error;
+        await syncReportFiles(supabase, id);
+      }),
+    );
   });
 }

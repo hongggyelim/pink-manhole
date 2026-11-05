@@ -23,12 +23,12 @@ export async function proxy(request: NextRequest) {
       },
     },
   );
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refreshes the session cookie when needed and verifies the JWT locally (no Auth round trip).
+  const { data } = await supabase.auth.getClaims();
+  const signedIn = Boolean(data?.claims?.sub);
 
   const isLogin = request.nextUrl.pathname === Route.AdminLogin;
-  if (!user && !isLogin) {
+  if (!signedIn && !isLogin) {
     return NextResponse.redirect(new URL(Route.AdminLogin, request.url));
   }
   return response;

@@ -15,13 +15,15 @@ export type AdminContext =
  */
 export const getAdminContext = cache(async (): Promise<AdminContext> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { state: "anon" };
+  // getClaims() verifies the JWT signature locally against the project's (cached) asymmetric
+  // signing keys — no Auth server round trip, unlike getUser(). is_admin() then re-checks in the DB.
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) return { state: "anon" };
+  const email = typeof claims.email === "string" ? claims.email : null;
   const { data: isAdmin, error } = await supabase.rpc("is_admin");
-  if (error || !isAdmin) return { state: "forbidden", email: user.email ?? null };
-  return { state: "admin", userId: user.id, email: user.email ?? null, supabase };
+  if (error || !isAdmin) return { state: "forbidden", email };
+  return { state: "admin", userId: claims.sub, email, supabase };
 });
 
 /** For admin pages: redirect if signed out; non-admins are handled by the layout gate. */
