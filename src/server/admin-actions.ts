@@ -1,11 +1,13 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { REPORT_STATUSES } from "@/shared/constants";
 import { adminPhotoDecisionSchema, adminReportIdSchema } from "@/shared/schemas";
 import { ForbiddenError, requireAdminAction } from "./auth";
+import { hitRateLimit } from "./services/abuse";
 import { syncReportFiles } from "./services/photo-files";
 import { Route } from "@/shared/routes";
 
@@ -29,6 +31,7 @@ const loginSchema = z.object({ email: z.email(), password: z.string().min(1).max
 export async function signIn(_prev: string | null, formData: FormData): Promise<string | null> {
   const parsed = loginSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
   if (!parsed.success) return "이메일과 비밀번호를 확인해주세요.";
+  if (await hitRateLimit("login", await headers())) return "로그인 시도가 너무 많아요. 15분 후 다시 시도해주세요.";
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return "이메일 또는 비밀번호가 올바르지 않아요.";

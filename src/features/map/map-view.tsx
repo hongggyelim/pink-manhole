@@ -205,7 +205,14 @@ export function MapView({
         "flex flex-col items-center justify-center rounded-full bg-primary/90 text-white shadow-md border-2 border-white";
       const size = Math.min(64, 36 + Math.log2(b.count + 1) * 6);
       el.style.width = el.style.height = `${size}px`;
-      el.innerHTML = `<span style="font-size:10px;line-height:1">${b.key}</span><span style="font-size:13px;font-weight:700;line-height:1.2">${b.count}</span>`;
+      // textContent (not innerHTML): region names come from data, never treat them as markup.
+      const label = document.createElement("span");
+      label.style.cssText = "font-size:10px;line-height:1";
+      label.textContent = b.key;
+      const count = document.createElement("span");
+      count.style.cssText = "font-size:13px;font-weight:700;line-height:1.2";
+      count.textContent = String(b.count);
+      el.append(label, count);
       el.onclick = () => cb.current.onBubbleClick?.(b);
       return new kakao.maps.CustomOverlay({
         map: mapRef.current,

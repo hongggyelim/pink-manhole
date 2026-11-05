@@ -4,6 +4,7 @@
  * Exceptions (Next.js requires literal strings there):
  *  - route type params such as `PageProps<"/reports/[reportNo]">` / `LayoutProps<"/admin">`
  *  - `config.matcher` in src/proxy.ts (read statically at build time)
+ *  - `crons[].path` in vercel.json
  */
 export enum Route {
   Landing = "/",
@@ -33,6 +34,8 @@ export enum ApiRoute {
   Uploads = "/api/uploads",
   Reports = "/api/reports",
   Geocode = "/api/geocode",
+  /** Daily cleanup job (Vercel Cron, see vercel.json — the path there must stay a literal). */
+  CronCleanup = "/api/cron/cleanup",
 }
 
 type QueryValue = string | number | boolean | null | undefined;
