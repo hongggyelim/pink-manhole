@@ -31,6 +31,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { CameraDialog } from "./camera-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 import { processPhoto, type ProcessedPhoto } from "./image";
@@ -177,9 +178,14 @@ export function ReportForm() {
 
   /* ── Photos ───────────────────────────────────────────────────────────── */
 
-  async function onFiles(list: FileList | File[] | null) {
+  async function onFiles(
+    list: FileList | File[] | null,
+    source: "album" | "in_app_camera" | "device_camera",
+  ) {
     const files = list ? [...list] : [];
     if (!files.length) return;
+    if (source === "album") trackEvent("select_photo", { count: files.length });
+    else trackEvent("take_photo", { method: source, count: files.length });
     setPhotoError(null);
     setBusy(true);
     uploadedDraft.current = null; // photo set changes → upload again on submit
@@ -316,6 +322,11 @@ export function ReportForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "제보 등록에 실패했어요.");
+      trackEvent("submit_report", {
+        photo_count: photos.length,
+        has_memo: memo.trim().length > 0,
+        location_source: location.source,
+      });
       router.replace(withQuery(Route.Home, { submitted: 1 }));
     } catch (e) {
       setSubmitError((e as Error).message || "제보 등록에 실패했어요.");
@@ -335,7 +346,7 @@ export function ReportForm() {
         accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
         multiple
         hidden
-        onChange={(e) => onFiles(e.target.files)}
+        onChange={(e) => onFiles(e.target.files, "album")}
       />
       <input
         ref={cameraInputRef}
@@ -343,7 +354,7 @@ export function ReportForm() {
         accept="image/*"
         capture="environment"
         hidden
-        onChange={(e) => onFiles(e.target.files)}
+        onChange={(e) => onFiles(e.target.files, "device_camera")}
       />
 
       <div className="flex-1 space-y-7 px-5 pt-2 pb-6">
@@ -641,7 +652,7 @@ export function ReportForm() {
       {cameraOpen && (
         <CameraDialog
           remaining={remaining}
-          onCapture={(file) => onFiles([file])}
+          onCapture={(file) => onFiles([file], "in_app_camera")}
           onClose={() => setCameraOpen(false)}
         />
       )}

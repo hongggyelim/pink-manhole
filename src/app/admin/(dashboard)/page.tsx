@@ -96,11 +96,11 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
       </nav>
 
       {/* key: remount when the URL changes so the search box reflects it */}
-      <FilterBar key={withQuery(Route.Admin, filterParams(f, { page: undefined }))} filters={f} />
+      <FilterBar key={`filters:${withQuery(Route.Admin, filterParams(f, { page: undefined }))}`} filters={f} />
 
       {/* key: reset the selection whenever the list (filters/page) changes */}
       <AdminReportList
-        key={withQuery(Route.Admin, filterParams(f))}
+        key={`list:${withQuery(Route.Admin, filterParams(f))}`}
         reports={reports}
         thumbs={thumbs}
         count={count}
