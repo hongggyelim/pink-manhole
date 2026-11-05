@@ -4,6 +4,7 @@ import {
   BarChart3,
   ChevronRight,
   FileSearch,
+  Mail,
   Info,
   Megaphone,
   MessageCircleQuestion,
@@ -13,6 +14,8 @@ import Link from "next/link";
 import { Route } from "@/shared/routes";
 
 export const metadata = pageMetadata({ title: "더보기", path: Route.More });
+
+const CONTACT_EMAIL = "dev.hongyelim@gmail.com";
 
 const MENU = [
   { href: Route.About, label: "분홍 맨홀이 위험한 이유", icon: Info },
@@ -57,6 +60,17 @@ export default function MorePage() {
           </li>
         ))}
       </ul>
+
+      <section aria-labelledby="credits-title" className="mt-6 mb-8 rounded-2xl bg-neutral-50 px-5 py-4">
+        <h2 id="credits-title" className="text-sm font-semibold">사이트 제작 정보</h2>
+        <p className="mt-1 text-sm text-muted-foreground">피드백, 문의는 여기에 남겨주세요.</p>
+        <a
+          href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("[분홍 맨홀] 문의")}`}
+          className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          <Mail className="size-4" /> {CONTACT_EMAIL}
+        </a>
+      </section>
     </main>
   );
 }

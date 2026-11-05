@@ -1,135 +1,15 @@
+import { cn } from "@/lib/utils";
+import { landingSceneSvg } from "./art/scene-art";
+
+/** Built once at module load: static, trusted markup (no user input). */
+const SVG = landingSceneSvg();
+
 /**
- * Landing illustration: a pink manhole asks "분홍색 맨홀을 발견하셨나요?" while a startled
- * passer-by snaps a photo (flash blinks). Pure SVG — animations live in globals.css
- * (.ls-float / .ls-bob / .ls-flash / .ls-flash-cone) and respect prefers-reduced-motion.
+ * Landing illustration: a pink manhole in the middle of a path seen from above, with
+ * footprints walking around it and "분홍색 맨홀은 절대 밟지 마세요" below. The markup lives in
+ * `art/scene-art.ts` (shared with the PNG export); the walking animation (.ls-step) is in
+ * globals.css and respects prefers-reduced-motion.
  */
 export function LandingScene({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 360 330"
-      className={className}
-      role="img"
-      aria-label="분홍색 맨홀을 발견하고 놀란 사람이 휴대폰으로 사진을 찍는 그림"
-    >
-      <defs>
-        <linearGradient id="ls-pave" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#fff" stopOpacity=".06" />
-          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-        </linearGradient>
-        <radialGradient id="ls-mh" cx="45%" cy="40%" r="70%">
-          <stop offset="0%" stopColor="#f9b3cb"/>
-          <stop offset="100%" stopColor="#dc4a7f"/>
-        </radialGradient>
-        <pattern id="ls-dots" width="9" height="9" patternUnits="userSpaceOnUse">
-          <circle cx="4.5" cy="4.5" r="1.7" fill="#c2386b" opacity=".5"/>
-        </pattern>
-        <clipPath id="ls-mhClip"><ellipse cx="135" cy="262" rx="74" ry="29"/></clipPath>
-        <radialGradient id="ls-flashG" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff"/>
-          <stop offset="45%" stopColor="#fff6b8"/>
-          <stop offset="100%" stopColor="#ffe36e" stopOpacity="0"/>
-        </radialGradient>
-        <filter id="ls-soft" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#000" floodOpacity=".25"/>
-        </filter>
-      </defs>
-
-      {/* pavement */}
-      <path d="M0 215 L360 205 L360 330 L0 330 Z" fill="url(#ls-pave)"/>
-      <path d="M0 290 L360 280" stroke="#fff" strokeOpacity=".06" strokeWidth="2"/>
-
-      {/* light cone from the flash */}
-      <polygon className="ls-flash-cone" points="236,153 55,252 210,262" fill="#fff6b8" opacity=".12"/>
-
-      {/* manhole */}
-      <ellipse cx="135" cy="270" rx="112" ry="46" fill="#000" opacity=".28"/>
-      <ellipse cx="135" cy="262" rx="104" ry="43" fill="#a92c58"/>
-      <ellipse cx="135" cy="259" rx="98" ry="39" fill="url(#ls-mh)"/>
-      <ellipse cx="135" cy="259" rx="86" ry="34" fill="none" stroke="#c2386b" strokeWidth="3" opacity=".6"/>
-      <g clipPath="url(#ls-mhClip)"><rect x="55" y="225" width="160" height="70" fill="url(#ls-dots)"/></g>
-      <ellipse cx="135" cy="259" rx="20" ry="8" fill="#f6a5c2" stroke="#c2386b" strokeWidth="2.5"/>
-      <path d="M92 236 Q 112 228 132 227" stroke="#fff" strokeOpacity=".45" strokeWidth="3" fill="none" strokeLinecap="round"/>
-      {/* cracks (flattened to the cover's perspective) + a chipped, broken-through spot */}
-      <g stroke="#7d2445" strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <path d="M147 254 L160 249 L171 251 L183 244 L196 246 L214 240 L229 243" strokeWidth="2.2" />
-        <path d="M183 244 L189 236 L201 232" strokeWidth="1.6" />
-        <path d="M171 251 L176 260 L190 266 L198 276" strokeWidth="1.8" />
-        <path d="M124 264 L112 270 L104 268 L90 276 L80 274 L66 281" strokeWidth="2" />
-        <path d="M104 268 L101 280 L92 288" strokeWidth="1.5" />
-        <path d="M137 266 L141 276 L137 286 L141 296" strokeWidth="1.6" />
-      </g>
-      <path d="M196 263 L205 258 L216 260 L220 266 L212 271 L201 270 Z" fill="#a92c58" />
-      <path d="M199 264 L206 260.5 L214 262 L216.5 266 L210.5 269 L202.5 268.5 Z" fill="#1a0f13" />
-      <path d="M206 260.5 L214 262 L209 264.5 Z" fill="#c2386b" />
-
-      {/* cloud speech bubble */}
-      <g className="ls-float" filter="url(#ls-soft)">
-        <circle cx="62" cy="104" r="28" fill="#fff"/>
-        <circle cx="96" cy="78" r="35" fill="#fff"/>
-        <circle cx="142" cy="68" r="40" fill="#fff"/>
-        <circle cx="188" cy="82" r="33" fill="#fff"/>
-        <circle cx="212" cy="106" r="25" fill="#fff"/>
-        <rect x="60" y="92" width="154" height="40" rx="20" fill="#fff"/>
-        <circle cx="122" cy="152" r="9" fill="#fff"/>
-        <circle cx="113" cy="172" r="6" fill="#fff"/>
-        <circle cx="107" cy="188" r="3.5" fill="#fff"/>
-        <text x="137" y="94" textAnchor="middle" fontSize="17" fontWeight="800" fill="#2f2e54">분홍색 맨홀을</text>
-        <text x="137" y="117" textAnchor="middle" fontSize="17" fontWeight="800" fill="#2f2e54">발견하셨나요<tspan fill="#e8578a">?</tspan></text>
-      </g>
-
-      {/* person */}
-      <g className="ls-bob">
-        {/* legs + shoes */}
-        <rect x="281" y="244" width="13" height="56" rx="6" fill="#33364f"/>
-        <rect x="299" y="244" width="13" height="56" rx="6" fill="#2a2d44"/>
-        <ellipse cx="283" cy="301" rx="12" ry="5" fill="#1d1d24"/>
-        <ellipse cx="301" cy="301" rx="12" ry="5" fill="#1d1d24"/>
-        {/* back arm */}
-        <path d="M311 200 Q 300 186 262 172" stroke="#4a6cc4" strokeWidth="11" strokeLinecap="round" fill="none"/>
-        {/* torso */}
-        <rect x="272" y="186" width="50" height="66" rx="18" fill="#5b7fd6"/>
-        <path d="M284 188 Q 297 200 310 188" stroke="#4a6cc4" strokeWidth="4" fill="none"/>
-        {/* head */}
-        <circle cx="318" cy="160" r="5" fill="#f2c3a6"/>
-        <circle cx="298" cy="158" r="25" fill="#f7d4bc"/>
-        <path d="M273 154 Q 274 128 300 130 Q 324 131 323 156 Q 316 140 300 141 Q 284 141 273 154 Z" fill="#2f2e54"/>
-        {/* eyebrows (raised) */}
-        <path d="M279 143 Q 285 139 291 142" stroke="#2f2e54" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-        <path d="M296 142 Q 302 138 308 142" stroke="#2f2e54" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-        {/* big round eyes */}
-        <circle cx="285" cy="155" r="7.5" fill="#fff" stroke="#2f2e54" strokeWidth="1.6"/>
-        <circle cx="302" cy="155" r="7.5" fill="#fff" stroke="#2f2e54" strokeWidth="1.6"/>
-        <circle cx="282.5" cy="156" r="3.4" fill="#1d1d24"/>
-        <circle cx="299.5" cy="156" r="3.4" fill="#1d1d24"/>
-        <circle cx="283.6" cy="154.8" r="1" fill="#fff"/>
-        <circle cx="300.6" cy="154.8" r="1" fill="#fff"/>
-        {/* blush + o-mouth */}
-        <ellipse cx="280" cy="167" rx="4" ry="2.4" fill="#f59ab8" opacity=".7"/>
-        <ellipse cx="309" cy="167" rx="4" ry="2.4" fill="#f59ab8" opacity=".7"/>
-        <ellipse cx="292" cy="171" rx="3.2" ry="4.2" fill="#7a2e46"/>
-        {/* front arm + hands */}
-        <path d="M280 198 Q 266 194 254 178" stroke="#5b7fd6" strokeWidth="11" strokeLinecap="round" fill="none"/>
-        {/* phone */}
-        <g transform="rotate(-18 248 166)">
-          <rect x="235" y="145" width="26" height="42" rx="5" fill="#1f2230"/>
-          <rect x="237.5" y="148" width="21" height="36" rx="3" fill="#e8578a" opacity=".9"/>
-          <rect x="240" y="150.5" width="16" height="31" rx="2" fill="#f6a5c2"/>
-          <circle cx="241" cy="151" r="2.6" fill="#0d0f17" stroke="#9aa3c7" strokeWidth="1"/>
-        </g>
-        <circle cx="255" cy="178" r="6" fill="#f7d4bc"/>
-        <circle cx="262" cy="171" r="5.5" fill="#f2c3a6"/>
-        {/* shock marks + 위험해 */}
-        <path d="M270 128 l-6 -8 M279 122 l-2 -10 M289 120 l1 -10" stroke="#ffd23f" strokeWidth="2.4" strokeLinecap="round"/>
-        <path d="M326 148 q 5 6 0 10 q -5 -4 0 -10 z" fill="#8fd3ff"/>
-        <text x="310" y="122" fontSize="12" fontWeight="800" fill="#ffd23f" transform="rotate(10 310 122)">위험해!</text>
-      </g>
-
-      {/* camera flash (on the phone's lens) */}
-      <g className="ls-flash">
-        <circle cx="236" cy="153" r="17" fill="url(#ls-flashG)"/>
-        <path d="M236 140 L238.2 150.8 L249 153 L238.2 155.2 L236 166 L233.8 155.2 L223 153 L233.8 150.8 Z" fill="#fff"/>
-        <path d="M225 142 l4 4 M247 142 l-4 4 M225 164 l4 -4 M247 164 l-4 -4" stroke="#fff6b8" strokeWidth="2" strokeLinecap="round"/>
-      </g>
-    </svg>
-  );
+  return <div className={cn("[&>svg]:size-full", className)} dangerouslySetInnerHTML={{ __html: SVG }} />;
 }

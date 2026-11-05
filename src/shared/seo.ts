@@ -16,15 +16,15 @@ export function siteUrl() {
 }
 
 /**
- * 1200×630 share card. Regenerate with `node scripts/og/generate.mjs`.
+ * 1200×630 share card. Regenerate with `node --experimental-strip-types scripts/og/generate.mjs`.
  * Bump `v` whenever the image changes: KakaoTalk/Slack/Facebook cache previews by image URL.
  */
-export const OG_IMAGE_VERSION = 2;
+export const OG_IMAGE_VERSION = 3;
 export const DEFAULT_OG_IMAGE = {
   url: `/og/default.png?v=${OG_IMAGE_VERSION}`,
   width: 1200,
   height: 630,
-  alt: "금이 간 분홍색 맨홀과 \"분홍색 맨홀을 발견하셨나요?\" 문구 — 분홍 맨홀 제보 서비스",
+  alt: "분홍색 맨홀 뚜껑과 \"분홍색 맨홀을 발견하셨나요?\" 문구 — 분홍 맨홀 제보 서비스",
 };
 
 type OgImage = { url: string; width?: number; height?: number; alt?: string };
