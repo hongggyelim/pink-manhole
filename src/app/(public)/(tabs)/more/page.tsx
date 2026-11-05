@@ -28,7 +28,7 @@ const MENU = [
 
 export default function MorePage() {
   return (
-    <main className="px-4">
+    <main className="flex flex-1 flex-col px-4">
       <header className="flex h-14 items-center">
         <Logo />
       </header>
@@ -49,7 +49,7 @@ export default function MorePage() {
           <ChevronRight className="size-5" />
         </span>
       </Link>
-      <ul className="mt-4 divide-y">
+      <ul className="mt-4 mb-6 divide-y">
         {MENU.map(({ href, label, icon: Icon }) => (
           <li key={href}>
             <Link href={href} className="flex items-center gap-3 py-4">
@@ -61,7 +61,7 @@ export default function MorePage() {
         ))}
       </ul>
 
-      <section aria-labelledby="credits-title" className="mt-6 mb-8 rounded-2xl bg-neutral-50 px-5 py-4">
+      <section aria-labelledby="credits-title" className="mt-auto mb-4 rounded-2xl bg-neutral-50 px-5 py-4">
         <h2 id="credits-title" className="text-sm font-semibold">사이트 제작 정보</h2>
         <p className="mt-1 text-sm text-muted-foreground">피드백, 문의는 여기에 남겨주세요.</p>
         <a
