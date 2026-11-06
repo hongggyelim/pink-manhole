@@ -25,14 +25,18 @@ export async function processUploadedPhoto(input: Buffer) {
   if (!meta.format || !ALLOWED_FORMATS.has(meta.format)) {
     throw new PhotoError("JPG, PNG, WebP 사진만 올릴 수 있어요.");
   }
+  // The three encodes run in parallel on libvips' thread pool. Plain libjpeg (no mozjpeg):
+  // mozjpeg was ~4x slower for a few % smaller files.
   const base = () => sharp(input, { limitInputPixels: MAX_INPUT_PIXELS }).rotate();
-  const { data: full, info } = await base()
-    .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
-    .jpeg({ quality: 82, mozjpeg: true })
-    .toBuffer({ resolveWithObject: true });
-  const thumb = await base().resize(400, 400, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 75 }).toBuffer();
-  // Tiny downscale first so nothing recognisable survives, then upscale + blur.
-  const blur = await base().resize(24).resize(400).blur(12).jpeg({ quality: 60 }).toBuffer();
+  const [{ data: full, info }, thumb, blur] = await Promise.all([
+    base()
+      .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 82 })
+      .toBuffer({ resolveWithObject: true }),
+    base().resize(400, 400, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 75 }).toBuffer(),
+    // Tiny downscale first so nothing recognisable survives, then upscale + blur.
+    base().resize(24).resize(400).blur(12).jpeg({ quality: 60 }).toBuffer(),
+  ]);
   return { full, thumb, blur, width: info.width, height: info.height };
 }
 
@@ -88,26 +92,27 @@ export async function syncReportFiles(client: SupabaseClient, reportId: string) 
 /** Download → validate/re-encode → write processed files to the private bucket. */
 export async function processDraftPhotos(admin: SupabaseClient, draftId: string, count: number) {
   const storage = admin.storage.from(UPLOAD_BUCKET);
-  const results = [];
-  for (let i = 0; i < count; i++) {
-    const paths = photoPaths(draftId, i);
-    const { data: blob, error } = await storage.download(paths.full);
-    if (error || !blob) throw new PhotoError("업로드된 사진을 찾을 수 없어요.");
-    const processed = await processUploadedPhoto(Buffer.from(await blob.arrayBuffer()));
-    const uploads = await Promise.all([
-      storage.upload(paths.full, processed.full, { contentType: "image/jpeg", upsert: true }),
-      storage.upload(paths.thumb, processed.thumb, { contentType: "image/jpeg", upsert: true }),
-      storage.upload(paths.blur, processed.blur, { contentType: "image/jpeg", upsert: true }),
-    ]);
-    const failed = uploads.find((u) => u.error);
-    if (failed?.error) throw failed.error;
-    results.push({
-      storage_path: paths.full,
-      thumb_path: paths.thumb,
-      blur_path: paths.blur,
-      width: processed.width,
-      height: processed.height,
-    });
-  }
-  return results;
+  // Photos are processed in parallel (≤ MAX_PHOTOS), order preserved by index.
+  return Promise.all(
+    Array.from({ length: count }, async (_, i) => {
+      const paths = photoPaths(draftId, i);
+      const { data: blob, error } = await storage.download(paths.full);
+      if (error || !blob) throw new PhotoError("업로드된 사진을 찾을 수 없어요.");
+      const processed = await processUploadedPhoto(Buffer.from(await blob.arrayBuffer()));
+      const uploads = await Promise.all([
+        storage.upload(paths.full, processed.full, { contentType: "image/jpeg", upsert: true }),
+        storage.upload(paths.thumb, processed.thumb, { contentType: "image/jpeg", upsert: true }),
+        storage.upload(paths.blur, processed.blur, { contentType: "image/jpeg", upsert: true }),
+      ]);
+      const failed = uploads.find((u) => u.error);
+      if (failed?.error) throw failed.error;
+      return {
+        storage_path: paths.full,
+        thumb_path: paths.thumb,
+        blur_path: paths.blur,
+        width: processed.width,
+        height: processed.height,
+      };
+    }),
+  );
 }
