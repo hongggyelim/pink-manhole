@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { REPORT_STATUSES } from "@/shared/constants";
+import { REPORT_STATUSES, type PhotoModeration } from "@/shared/constants";
 import { adminPhotoDecisionSchema, adminReportIdSchema } from "@/shared/schemas";
 import { ForbiddenError, requireAdminAction } from "./auth";
 import { hitRateLimit } from "./services/abuse";
@@ -51,7 +51,8 @@ export async function signOut() {
 
 /* ── Moderation (DB function does the change + activity log atomically; then files are synced) ── */
 
-export async function moderatePhoto(photoId: string, decision: "approved" | "private"): Promise<ActionResult> {
+/** `pending` = 검토 취소. */
+export async function moderatePhoto(photoId: string, decision: PhotoModeration): Promise<ActionResult> {
   return run(async () => {
     const input = adminPhotoDecisionSchema.parse({ photoId, decision });
     const { supabase } = await requireAdminAction();
@@ -96,16 +97,37 @@ export async function setReportDeleted(reportId: string, deleted: boolean): Prom
 
 const bulkIdsSchema = z.array(adminReportIdSchema).min(1).max(100);
 
-/** Bulk soft delete / restore. Each report goes through admin_set_deleted, so every one gets its own activity log. */
-export async function setReportsDeleted(reportIds: string[], deleted: boolean): Promise<ActionResult> {
+/** Actions the admin list runs on one report or on a selection. Keep in sync with REPORT_ACTIONS in the list UI. */
+export type ReportAction =
+  | "approve_photos" | "private_photos" | "reset_photos"
+  | "hide" | "unhide" | "delete" | "restore";
+const reportActionSchema = z.enum([
+  "approve_photos", "private_photos", "reset_photos", "hide", "unhide", "delete", "restore",
+]);
+
+/**
+ * Runs one action on each report. Every report goes through its own SQL function call (one
+ * transaction + activity log each), in parallel, then its files are synced to the right bucket.
+ */
+export async function runReportAction(reportIds: string[], action: ReportAction): Promise<ActionResult> {
   return run(async () => {
     const ids = [...new Set(bulkIdsSchema.parse(reportIds))];
-    const flag = z.boolean().parse(deleted);
+    const a = reportActionSchema.parse(action);
     const { supabase } = await requireAdminAction();
-    // Independent per-report transactions → run them in parallel, then sync each report's files.
+    const rpc = (id: string) => {
+      switch (a) {
+        case "approve_photos": return supabase.rpc("admin_moderate_report_photos", { p_report_id: id, p_decision: "approved" });
+        case "private_photos": return supabase.rpc("admin_moderate_report_photos", { p_report_id: id, p_decision: "private" });
+        case "reset_photos": return supabase.rpc("admin_moderate_report_photos", { p_report_id: id, p_decision: "pending" });
+        case "hide": return supabase.rpc("admin_set_hidden", { p_report_id: id, p_hidden: true });
+        case "unhide": return supabase.rpc("admin_set_hidden", { p_report_id: id, p_hidden: false });
+        case "delete": return supabase.rpc("admin_set_deleted", { p_report_id: id, p_deleted: true });
+        case "restore": return supabase.rpc("admin_set_deleted", { p_report_id: id, p_deleted: false });
+      }
+    };
     await Promise.all(
       ids.map(async (id) => {
-        const { error } = await supabase.rpc("admin_set_deleted", { p_report_id: id, p_deleted: flag });
+        const { error } = await rpc(id);
         if (error) throw error;
         await syncReportFiles(supabase, id);
       }),

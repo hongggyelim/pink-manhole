@@ -1,7 +1,7 @@
 "use client";
 
 import { routes } from "@/shared/routes";
-import { ChevronLeft, ChevronRight, EyeOff, Check, X, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, EyeOff, Check, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
@@ -23,12 +23,12 @@ type Props = {
   onIndexChange: (i: number) => void;
   onClose: () => void;
   /** Called after a successful decision (parent updates/removes the item). */
-  onDecided: (photoId: string, decision: "approved" | "private") => void;
+  onDecided: (photoId: string, decision: PhotoModeration) => void;
 };
 
 /**
- * Full-screen viewer: zoom/pan the photo and approve / make private without leaving it.
- * Keys: ← → navigate · A approve · H 비공개 · Z zoom · Esc close.
+ * Full-screen viewer: zoom/pan the photo and approve / make private / cancel the review without leaving it.
+ * Keys: ← → navigate · A approve · H 비공개 · U 검토 취소 · Z zoom · Esc close.
  */
 export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided }: Props) {
   const item = items[index];
@@ -47,8 +47,8 @@ export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided 
   );
 
   const decide = useCallback(
-    (decision: "approved" | "private") => {
-      if (!item || pending) return;
+    (decision: PhotoModeration) => {
+      if (!item || pending || item.status === decision) return;
       setError(null);
       startTransition(async () => {
         const res = await moderatePhoto(item.photoId, decision);
@@ -67,6 +67,7 @@ export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided 
       else if (e.key === "ArrowLeft") go(-1);
       else if (e.key.toLowerCase() === "a") decide("approved");
       else if (e.key.toLowerCase() === "h") decide("private");
+      else if (e.key.toLowerCase() === "u") decide("pending");
       else if (e.key.toLowerCase() === "z") setZoomed((z) => !z);
     };
     window.addEventListener("keydown", onKey);
@@ -135,11 +136,17 @@ export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided 
         <p className="max-w-full truncate text-xs text-white/60 sm:hidden">{item.address ?? "주소 없음"}</p>
         {error && <p className="text-sm text-red-300">{error}</p>}
         <div className="flex w-full max-w-md gap-3">
-          <button disabled={pending} onClick={() => decide("private")}
+          {item.status !== "pending" && (
+            <button disabled={pending} onClick={() => decide("pending")}
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-white/15 font-semibold hover:bg-white/25 disabled:opacity-50">
+              <RotateCcw className="size-5" /> 검토 취소 <kbd className="hidden text-xs text-white/50 sm:inline">U</kbd>
+            </button>
+          )}
+          <button disabled={pending || item.status === "private"} onClick={() => decide("private")}
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-white/15 font-semibold hover:bg-white/25 disabled:opacity-50">
             <EyeOff className="size-5" /> 비공개 <kbd className="hidden text-xs text-white/50 sm:inline">H</kbd>
           </button>
-          <button disabled={pending} onClick={() => decide("approved")}
+          <button disabled={pending || item.status === "approved"} onClick={() => decide("approved")}
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-primary font-semibold hover:bg-primary/90 disabled:opacity-50">
             <Check className="size-5" /> 승인 <kbd className="hidden text-xs text-white/60 sm:inline">A</kbd>
           </button>

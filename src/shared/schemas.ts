@@ -26,6 +26,6 @@ export const reportNoSchema = z.string().regex(/^PM-\d{6}-[2-9A-HJ-NP-Z]{4}$/);
 
 export const adminPhotoDecisionSchema = z.object({
   photoId: z.uuid(),
-  decision: z.enum(["approved", "private"]),
+  decision: z.enum(["pending", "approved", "private"]), // pending = 검토 취소
 });
 export const adminReportIdSchema = z.uuid();

@@ -105,7 +105,6 @@ async function ReportList({ searchParams }: { searchParams: SP }) {
         thumbs={thumbs}
         count={count}
         exportHref={withQuery(Route.AdminExport, filterParams(f, { page: undefined }))}
-        deletedView={f.view === "deleted"}
       />
 
       {pages > 1 && (
