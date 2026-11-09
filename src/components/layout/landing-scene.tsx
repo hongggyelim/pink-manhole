@@ -5,10 +5,8 @@ import { landingSceneSvg } from "./art/scene-art";
 const SVG = landingSceneSvg();
 
 /**
- * Landing illustration: a pink manhole in the middle of a path seen from above, with
- * footprints walking around it and "분홍색 맨홀은 절대 밟지 마세요" below. The markup lives in
- * `art/scene-art.ts` (shared with the PNG export); the walking animation (.ls-step) is in
- * globals.css and respects prefers-reduced-motion.
+ * Landing hero: a photo of a real pink manhole with "맨홀을 발견하셨나요? / 절대 밟지 마세요!" below.
+ * The markup lives in `art/scene-art.ts`; the photo is public/images/landing-manhole.jpg.
  */
 export function LandingScene({ className }: { className?: string }) {
   return <div className={cn("[&>svg]:size-full", className)} dangerouslySetInnerHTML={{ __html: SVG }} />;

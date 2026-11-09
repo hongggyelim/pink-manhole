@@ -1,18 +1,16 @@
-// Renders the static images from the SVG sources in src/components/layout/art/scene-art.ts.
+// Renders the share image from the SVG source in src/components/layout/art/scene-art.ts.
 // Usage: node --experimental-strip-types scripts/og/generate.mjs
 //   ogImageSvg()      → public/og/default.png            (1200×630 share image: Open Graph / KakaoTalk)
-//   landingSceneSvg() → public/images/landing-scene.png  (main-screen illustration, transparent, 3×)
 // Text is rendered with the system's Korean font (macOS: Apple SD Gothic Neo).
 // After changing the share image, bump OG_IMAGE_VERSION in src/shared/seo.ts.
 import sharp from "sharp";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { landingSceneSvg, ogImageSvg } from "../../src/components/layout/art/scene-art.ts";
+import { ogImageSvg } from "../../src/components/layout/art/scene-art.ts";
 
 const jobs = [
   { svg: ogImageSvg(), viewWidth: 1200, out: "../../public/og/default.png", width: 1200, height: 630 },
-  { svg: landingSceneSvg(), viewWidth: 360, out: "../../public/images/landing-scene.png", width: 1080, height: 1080 },
 ];
 
 for (const { svg, viewWidth, out, width, height } of jobs) {

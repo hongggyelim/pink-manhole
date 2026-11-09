@@ -136,17 +136,3 @@
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
 }
-
-/* Landing illustration (src/components/layout/art/scene-art.ts): footprints appear one by one
-   along each trail, linger, then fade, so the walk loops. Delays are set inline per print. */
-@keyframes ls-step {
-  0% { opacity: 0; }
-  3% { opacity: 1; }
-  55% { opacity: 1; }
-  70%, 100% { opacity: 0; }
-}
-.ls-step { opacity: 0; animation: ls-step 5.5s ease-out infinite both; }
-@media (prefers-reduced-motion: reduce) {
-  .ls-step { animation: none; opacity: 1; }
-}
-
