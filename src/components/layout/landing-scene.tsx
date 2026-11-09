@@ -5,9 +5,14 @@ import { landingSceneSvg } from "./art/scene-art";
 const SVG = landingSceneSvg();
 
 /**
- * Landing hero: a photo of a real pink manhole with "맨홀을 발견하셨나요? / 절대 밟지 마세요!" below.
- * The markup lives in `art/scene-art.ts`; the photo is public/images/landing-manhole.jpg.
+ * Landing hero: a pink manhole image with "맨홀을 발견하셨나요? / 절대 밟지 마세요!" below.
+ * The markup lives in `art/scene-art.ts`; the image is public/images/landing-manhole.png.
  */
 export function LandingScene({ className }: { className?: string }) {
-  return <div className={cn("[&>svg]:size-full", className)} dangerouslySetInnerHTML={{ __html: SVG }} />;
+  return (
+    <div
+      className={cn("[&>svg]:size-full", className)}
+      dangerouslySetInnerHTML={{ __html: SVG }}
+    />
+  );
 }

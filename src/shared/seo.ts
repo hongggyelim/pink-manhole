@@ -19,7 +19,7 @@ export function siteUrl() {
  * 1200×630 share card. Regenerate with `node --experimental-strip-types scripts/og/generate.mjs`.
  * Bump `v` whenever the image changes: KakaoTalk/Slack/Facebook cache previews by image URL.
  */
-export const OG_IMAGE_VERSION = 3;
+export const OG_IMAGE_VERSION = 4;
 export const DEFAULT_OG_IMAGE = {
   url: `/og/default.png?v=${OG_IMAGE_VERSION}`,
   width: 1200,

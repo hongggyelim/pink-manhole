@@ -1,7 +1,7 @@
 import { LandingScene } from "@/components/layout/landing-scene";
+import { Route } from "@/shared/routes";
 import { Camera, ChevronRight, MapPin } from "lucide-react";
 import Link from "next/link";
-import { Route } from "@/shared/routes";
 
 export default function LandingPage() {
   return (
@@ -18,7 +18,7 @@ export default function LandingPage() {
       </p>
 
       {/* Takes the remaining height; the SVG scales to fit (preserveAspectRatio: meet). */}
-      <div className="relative -mx-6 my-3 min-h-0 flex-1">
+      <div className="relative my-3 min-h-0 flex-1">
         <LandingScene className="absolute inset-0 size-full" />
       </div>
 
