@@ -371,26 +371,29 @@ export function ReportForm() {
               </span>
             }
           />
-          <p className="mb-3 text-sm text-muted-foreground">
+          <p className="mb-1 text-sm text-foreground">
             맨홀의 상태와 위치를 알 수 있는 사진을 올려주세요.
+          </p>
+          <p className="mb-3 text-sm text-muted-foreground">
+            앨범에서 사진을 선택하면 위치 정보가 업데이트돼요.
           </p>
           {remaining > 0 && (
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 disabled={busy}
-                onClick={openCamera}
+                onClick={() => albumInputRef.current?.click()}
                 className="flex h-12 items-center justify-center gap-1.5 rounded-lg bg-primary font-semibold text-white disabled:opacity-50"
               >
-                <Camera className="size-5" /> 카메라로 촬영
+                <ImageIcon className="size-5" /> 앨범에서 선택
               </button>
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => albumInputRef.current?.click()}
+                onClick={openCamera}
                 className="flex h-12 items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-pink-soft/40 font-semibold text-primary disabled:opacity-50"
               >
-                <ImageIcon className="size-5" /> 앨범에서 선택
+                <Camera className="size-5" /> 카메라로 촬영
               </button>
             </div>
           )}
