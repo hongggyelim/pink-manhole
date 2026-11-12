@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -38,14 +39,23 @@ import { processPhoto, type ProcessedPhoto } from "./image";
 import { distanceMeters, lookupAddress, readPhotoGps } from "./photo-gps";
 import { PrimaryButton } from "./primary-button";
 
-type DraftPhoto = ProcessedPhoto & { id: string; previewUrl: string };
+/** `gps`: location read from the photo's EXIF (album picks only). */
+type DraftPhoto = ProcessedPhoto & {
+  id: string;
+  previewUrl: string;
+  gps: LatLng | null;
+};
 type LocationSource = "photo" | "search" | "current" | "map";
 type DraftLocation = LatLng & {
   address: string | null;
   source: LocationSource;
   state: "loading" | "ok" | "outside";
 };
-type PhotoPrompt = LatLng & { address: string | null };
+/** A location found after the user already picked one → ask before replacing it. */
+type PhotoPrompt = LatLng & {
+  address: string | null;
+  source: "photo" | "current";
+};
 
 const SOURCE_LABEL: Record<LocationSource, string> = {
   photo: "사진 위치",
@@ -57,12 +67,42 @@ const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 /** Photo GPS closer than this to the chosen location is treated as "the same place". */
 const SAME_PLACE_METERS = 30;
 
+function currentPosition(): Promise<LatLng> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error("unsupported"));
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      reject,
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  });
+}
+
+function locationErrorNotice(e: unknown) {
+  return e instanceof Error && e.message === "unsupported"
+    ? "이 기기에서는 현재 위치를 사용할 수 없어요."
+    : "위치 권한이 없어요. 주소를 검색하거나 지도를 움직여 지정해주세요.";
+}
+
 type SignResponse = {
   draftId: string;
   uploads: { path: string; token: string }[];
 };
 
+/**
+ * With `cacheComponents`, Next keeps visited routes mounted but hidden (React
+ * `<Activity>`), so /report would come back with the last report's photos,
+ * memo and a stuck "등록 중…" button. After a successful submit the body is
+ * remounted with a new key once it is hidden; a draft the user leaves
+ * unfinished is still preserved.
+ */
 export function ReportForm() {
+  const [formKey, setFormKey] = useState(0);
+  const reset = useCallback(() => setFormKey((k) => k + 1), []);
+  return <ReportFormBody key={formKey} onReset={reset} />;
+}
+
+function ReportFormBody({ onReset }: { onReset: () => void }) {
   const router = useRouter();
   const mapRef = useRef<MapController>(null);
   const albumInputRef = useRef<HTMLInputElement>(null);
@@ -71,7 +111,7 @@ export function ReportForm() {
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
   const [location, setLocation] = useState<DraftLocation | null>(null);
   const [memo, setMemo] = useState("");
-  const [memoOpen, setMemoOpen] = useState(false);
+  const [memoOpen, setMemoOpen] = useState(true);
   const [busy, setBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
@@ -98,6 +138,7 @@ export function ReportForm() {
   const placeAt = useCallback(
     (p: LatLng, source: LocationSource, opts: { pan?: boolean } = {}) => {
       if (opts.pan !== false) mapRef.current?.panTo(p, 3);
+      setLocationNotice(null);
       setLocation({ ...p, source, address: null, state: "loading" });
       geocodeCtrl.current?.abort();
       const ctrl = new AbortController();
@@ -125,19 +166,9 @@ export function ReportForm() {
 
   function locateMe() {
     setLocationNotice(null);
-    if (!navigator.geolocation)
-      return setLocationNotice("이 기기에서는 현재 위치를 사용할 수 없어요.");
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        placeAt(
-          { lat: pos.coords.latitude, lng: pos.coords.longitude },
-          "current"
-        ),
-      () =>
-        setLocationNotice(
-          "위치 권한이 없어요. 주소를 검색하거나 지도를 움직여 지정해주세요."
-        ),
-      { enableHighAccuracy: true, timeout: 8000 }
+    currentPosition().then(
+      (p) => placeAt(p, "current"),
+      (e) => setLocationNotice(locationErrorNotice(e))
     );
   }
 
@@ -193,21 +224,32 @@ export function ReportForm() {
       const picked = files.slice(0, remaining);
       if (files.length > remaining)
         setPhotoError(`사진은 최대 ${MAX_PHOTOS}장까지 올릴 수 있어요.`);
-      // GPS is read from the ORIGINAL file (the compressed copy has no EXIF).
+      const fromCamera = source !== "album";
+      // Browsers strip GPS from photos taken through the web, so a fresh
+      // capture uses where the device is now (the user is at the manhole).
+      if (fromCamera)
+        currentPosition().then(
+          (p) => offerLocation(p, "current"),
+          (e) => setLocationNotice(locationErrorNotice(e))
+        );
+      // Album picks: GPS is read from the ORIGINAL file (the compressed copy has no EXIF).
       const [processed, gpsList] = await Promise.all([
         Promise.all(picked.map(processPhoto)),
-        Promise.all(picked.map(readPhotoGps)),
+        fromCamera
+          ? picked.map(() => null)
+          : Promise.all(picked.map(readPhotoGps)),
       ]);
       setPhotos((prev) => [
         ...prev,
-        ...processed.slice(0, MAX_PHOTOS - prev.length).map((p) => ({
+        ...processed.slice(0, MAX_PHOTOS - prev.length).map((p, i) => ({
           ...p,
           id: crypto.randomUUID(),
           previewUrl: URL.createObjectURL(p.full),
+          gps: gpsList[i],
         })),
       ]);
       const gps = gpsList.find(Boolean);
-      if (gps) await offerPhotoLocation(gps);
+      if (gps) await offerLocation(gps, "photo");
     } catch (e) {
       setPhotoError((e as Error).message);
     } finally {
@@ -217,23 +259,23 @@ export function ReportForm() {
     }
   }
 
-  async function offerPhotoLocation(gps: LatLng) {
+  async function offerLocation(p: LatLng, source: PhotoPrompt["source"]) {
     const current = locationRef.current;
-    if (!current) {
-      placeAt(gps, "photo");
-      setLocationNotice(
-        "사진에 담긴 위치로 설정했어요. 정확하지 않으면 지도를 움직여 조정해주세요."
-      );
-      return;
-    }
-    if (distanceMeters(current, gps) < SAME_PLACE_METERS) return;
-    const r = await lookupAddress(gps).catch(() => ({
+    if (!current) return placeAt(p, source);
+    if (distanceMeters(current, p) < SAME_PLACE_METERS) return;
+    const r = await lookupAddress(p).catch(() => ({
       state: "ok" as const,
       address: null,
     }));
     if (r.state === "outside") return;
-    setPhotoPrompt({ ...gps, address: r.address });
+    setPhotoPrompt({ ...p, address: r.address, source });
   }
+
+  // First album photo with GPS; offered again once the pin has moved away.
+  const photoGps = photos.find((p) => p.gps)?.gps ?? null;
+  const awayFromPhoto =
+    photoGps !== null &&
+    (!location || distanceMeters(location, photoGps) >= SAME_PLACE_METERS);
 
   function removePhoto(id: string) {
     setPhotos((prev) => {
@@ -256,10 +298,18 @@ export function ReportForm() {
   useEffect(() => {
     photosRef.current = photos;
   }, [photos]);
-  useEffect(
-    () => () =>
-      photosRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl)),
-    []
+  // Runs when Activity hides the page. Only reset after a successful submit,
+  // so an unfinished draft survives navigating away and back. (Object URLs
+  // are not revoked on hide either, or a preserved draft's previews break.)
+  const resetOnHide = useRef(false);
+  useLayoutEffect(
+    () => () => {
+      if (!resetOnHide.current) return;
+      resetOnHide.current = false;
+      photosRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+      onReset();
+    },
+    [onReset]
   );
   useEffect(() => {
     if (photos.length === 0 || submitting) return;
@@ -327,6 +377,7 @@ export function ReportForm() {
         has_memo: memo.trim().length > 0,
         location_source: location.source,
       });
+      resetOnHide.current = true;
       router.replace(withQuery(Route.Home, { submitted: 1 }));
     } catch (e) {
       setSubmitError((e as Error).message || "제보 등록에 실패했어요.");
@@ -375,7 +426,8 @@ export function ReportForm() {
             맨홀의 상태와 위치를 알 수 있는 사진을 올려주세요.
           </p>
           <p className="mb-3 text-sm text-muted-foreground">
-            앨범에서 사진을 선택하면 위치 정보가 업데이트돼요.
+            카메라로 촬영하면 현재 위치로, 앨범에서 선택하면 사진에 담긴
+            위치로 업데이트돼요.
           </p>
           {remaining > 0 && (
             <div className="grid grid-cols-2 gap-2">
@@ -435,6 +487,16 @@ export function ReportForm() {
             사진은 관리자 검토 전까지 흐리게 공개돼요. 얼굴·차량 번호판이 나오지
             않게 찍어주세요. (JPG·PNG·WebP, 장당 10MB 이하)
           </p>
+          {awayFromPhoto && (
+            <button
+              type="button"
+              onClick={() => placeAt(photoGps, "photo")}
+              className="mt-3 flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border text-sm font-medium text-foreground hover:bg-muted"
+            >
+              <MapPin className="size-4 text-primary" /> 사진 위치로 다시
+              설정
+            </button>
+          )}
         </section>
 
         {/* 2. Location */}
@@ -470,7 +532,20 @@ export function ReportForm() {
               </p>
               {location && (
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {SOURCE_LABEL[location.source]}
+                  {location.source === "photo" ? (
+                    <>
+                      사진에 담긴 위치로 설정했어요.
+                      <br />
+                      정확하지 않으면 지도를 움직여 조정해주세요.
+                    </>
+                  ) : (
+                    SOURCE_LABEL[location.source]
+                  )}
+                </p>
+              )}
+              {locationNotice && (
+                <p className="mt-0.5 text-xs text-destructive">
+                  {locationNotice}
                 </p>
               )}
             </div>
@@ -481,11 +556,6 @@ export function ReportForm() {
               <LocateFixed className="size-4" /> 현재 위치
             </button>
           </div>
-          {locationNotice && (
-            <p className="-mt-1 mb-3 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
-              {locationNotice}
-            </p>
-          )}
           <p className="mb-3 text-sm text-muted-foreground">
             주소를 검색하거나 지도에서 핀 위치를 설정해주세요.
           </p>
@@ -570,7 +640,7 @@ export function ReportForm() {
           </div>
         </section>
 
-        {/* 3. Memo (optional, collapsed by default) */}
+        {/* 3. Memo (optional, open by default, collapsible) */}
         <section aria-labelledby="memo-title">
           <SectionTitle
             id="memo-title"
@@ -625,7 +695,7 @@ export function ReportForm() {
           <Info className="mt-0.5 size-5 shrink-0" />
           <p>
             제보는 바로 등록돼요. 사진은 관리자 검토 전까지 흐리게 표시되고,
-            승인 후 공개돼요. 제보자의 개인정보는 공개되지 않아요.
+            승인 후 공개돼요. 제보자의 개인정보는 수집되거나 공개되지 않아요.
           </p>
         </div>
       </div>
@@ -662,17 +732,23 @@ export function ReportForm() {
 
       {photoPrompt && (
         <ConfirmDialog
-          title="사진 위치를 적용할까요?"
+          title={
+            photoPrompt.source === "photo"
+              ? "사진 위치를 적용할까요?"
+              : "현재 위치를 적용할까요?"
+          }
           confirmLabel="적용"
           cancelLabel="지금 주소 유지"
           onCancel={() => setPhotoPrompt(null)}
           onConfirm={() => {
-            placeAt(photoPrompt, "photo");
+            placeAt(photoPrompt, photoPrompt.source);
             setPhotoPrompt(null);
           }}
         >
           <p>
-            이 주소(사진에 있는 위치)로 적용할까요?
+            이 주소(
+            {photoPrompt.source === "photo" ? "사진에 있는 위치" : "현재 위치"})로
+            적용할까요?
             <br />
             <b className="text-foreground">
               {photoPrompt.address ??
