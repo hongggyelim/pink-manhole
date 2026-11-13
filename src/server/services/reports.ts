@@ -182,7 +182,7 @@ export async function createReport(input: CreateReportInput, meta: { ipHash: str
   });
   if (error) throw error;
 
-  // Publish the blur previews (originals stay private until approved).
+  // Puts every file in the right bucket (nothing is public until a photo is approved).
   await syncReportFiles(admin, input.draftId);
   return data as string;
 }

@@ -14,11 +14,17 @@ export function photoPaths(draftId: string, index: number) {
   };
 }
 
-/** What the public may see for a photo: the real image once approved, otherwise the blur preview. */
-export function publicPhoto(p: ReportPhoto) {
+/**
+ * What the public may see for a photo: the real image once approved. Pending and private
+ * photos are never published in any form; the UI draws a <PhotoPlaceholder> instead.
+ */
+export type PublicPhoto =
+  | { kind: "approved"; thumb: string; full: string }
+  | { kind: "pending" | "private" };
+
+export function publicPhoto(p: ReportPhoto): PublicPhoto {
   if (p.moderation_status === "approved") {
-    return { blurred: false, thumb: photoUrl(p.thumb_path), full: photoUrl(p.storage_path) };
+    return { kind: "approved", thumb: photoUrl(p.thumb_path), full: photoUrl(p.storage_path) };
   }
-  const blur = p.blur_path ? photoUrl(p.blur_path) : null;
-  return { blurred: true, thumb: blur, full: null };
+  return { kind: p.moderation_status };
 }

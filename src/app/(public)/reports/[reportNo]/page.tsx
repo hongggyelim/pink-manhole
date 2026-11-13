@@ -7,7 +7,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { PhotoPlaceholder } from "@/components/photo-placeholder";
 import { CopyButton } from "@/features/reports/copy-button";
+import { KakaoShareButton } from "@/features/share/kakao-share-button";
 import { ReportDetailMap } from "@/features/reports/report-detail-map";
 import { StatusBadge } from "@/features/reports/report-list-item";
 import { countNearby, getReportByNo } from "@/server/services/reports";
@@ -22,7 +24,7 @@ export async function generateMetadata({ params }: PageProps<"/reports/[reportNo
 
   const address = report.road_address ?? report.address;
   // Share card: the approved photo when there is one; otherwise the default card
-  // (never the blur preview — it would look like a broken image in a chat preview).
+  // (pending/private photos are never published).
   const approved = report.report_photos.find((p) => p.moderation_status === "approved");
   const description = [
     `${REPORT_STATUSES[report.status]} · ${formatDate(report.created_at)} 제보`,
@@ -70,20 +72,14 @@ async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["pa
       <div className="grid grid-cols-3 gap-2 px-4 pt-4">
         {report.report_photos.map((p, i) => {
           const photo = publicPhoto(p);
-          const img = photo.thumb && (
-            <img src={photo.thumb} alt={`제보 사진 ${i + 1}`} className="size-full object-cover" />
-          );
-          return photo.full ? (
+          return photo.kind === "approved" ? (
             <a key={p.id} href={photo.full} target="_blank" rel="noreferrer"
               className="aspect-square overflow-hidden rounded-xl bg-muted">
-              {img}
+              <img src={photo.thumb} alt={`제보 사진 ${i + 1}`} className="size-full object-cover" />
             </a>
           ) : (
-            <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
-              {img}
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white [text-shadow:0_1px_3px_rgba(0,0,0,.6)]">
-                검토 중
-              </span>
+            <div key={p.id} className="aspect-square overflow-hidden rounded-xl">
+              <PhotoPlaceholder kind={photo.kind} />
             </div>
           );
         })}
@@ -117,7 +113,13 @@ async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["pa
         </div>
       </section>
 
-      <div className="mt-6 h-2 bg-muted" />
+      <KakaoShareButton
+        path={routes.reportDetail(report.report_no)}
+        label="이 제보 카카오톡으로 공유하기"
+        className="mx-4 mt-4"
+      />
+
+      <div className="mt-8 h-2 bg-muted" />
 
       <section className="px-4 pt-5">
         <h2 className="text-lg font-bold">주변 신고 현황</h2>

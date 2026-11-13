@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { routes } from "@/shared/routes";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { PhotoPlaceholder } from "@/components/photo-placeholder";
 import { REPORT_STATUSES } from "@/shared/constants";
 import { formatDate } from "@/shared/format";
 import { publicPhoto } from "@/shared/photo";
@@ -13,10 +14,8 @@ export function ReportListItem({ report }: { report: PublicReport }) {
   return (
     <Link href={routes.reportDetail(report.report_no)} className="flex items-center gap-3 py-3">
       <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-        {photo?.thumb && <img src={photo.thumb} alt="" className="size-full object-cover" loading="lazy" />}
-        {photo?.blurred && (
-          <span className="absolute inset-x-0 bottom-0 bg-black/45 py-0.5 text-center text-[10px] text-white">검토중</span>
-        )}
+        {photo?.kind === "approved" && <img src={photo.thumb} alt="" className="size-full object-cover" loading="lazy" />}
+        {photo && photo.kind !== "approved" && <PhotoPlaceholder kind={photo.kind} />}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[15px] font-semibold">{report.road_address ?? report.address ?? "주소 정보 없음"}</p>

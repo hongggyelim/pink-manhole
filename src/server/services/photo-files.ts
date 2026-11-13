@@ -45,11 +45,12 @@ type FileKind = "full" | "thumb" | "blur";
 /** Which bucket each file of a photo should live in, given moderation + report visibility. */
 export function desiredBuckets(moderation: PhotoModeration, reportVisible: boolean): Record<FileKind, string> {
   const showReal = reportVisible && moderation === "approved";
-  const showBlur = reportVisible && moderation === "pending";
   return {
     full: showReal ? PHOTO_BUCKET : UPLOAD_BUCKET,
     thumb: showReal ? PHOTO_BUCKET : UPLOAD_BUCKET,
-    blur: showBlur ? PHOTO_BUCKET : UPLOAD_BUCKET,
+    // Blur previews are no longer published (the public UI draws a placeholder). Keeping the
+    // kind here moves blurs published before that change back to the private bucket.
+    blur: UPLOAD_BUCKET,
   };
 }
 

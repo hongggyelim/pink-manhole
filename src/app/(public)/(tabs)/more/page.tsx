@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Route } from "@/shared/routes";
+import { KakaoShareButton } from "@/features/share/kakao-share-button";
 
 export const metadata = pageMetadata({ title: "더보기", path: Route.More });
 
@@ -49,7 +50,8 @@ export default function MorePage() {
           <ChevronRight className="size-5" />
         </span>
       </Link>
-      <ul className="mt-4 mb-6 divide-y">
+      <KakaoShareButton path={Route.Landing} label="분홍 맨홀 카카오톡으로 알리기" className="mt-3" />
+      <ul className="mt-6 mb-6 divide-y">
         {MENU.map(({ href, label, icon: Icon }) => (
           <li key={href}>
             <Link href={href} className="flex items-center gap-3 py-4">
