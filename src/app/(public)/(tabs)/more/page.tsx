@@ -1,5 +1,6 @@
 import { Logo } from "@/components/layout/logo";
-import { pageMetadata } from "@/shared/seo";
+import { KakaoShareButton } from "@/features/share/kakao-share-button";
+import { DEFAULT_OG_IMAGE, pageMetadata, siteUrl } from "@/shared/seo";
 import {
   BarChart3,
   ChevronRight,
@@ -50,6 +51,18 @@ export default function MorePage() {
         </span>
       </Link>
       <ul className="mt-4 mb-6 divide-y">
+        <li>
+          {/* Absolute URLs built on the server: siteUrl() falls back to Vercel's production domain. */}
+          <KakaoShareButton
+            card={{
+              title: "분홍 맨홀을 발견하셨나요?",
+              description: "사진 한 장과 위치로 제보할 수 있어요. 함께 분홍 맨홀 지도를 채워주세요.",
+              imageUrl: `${siteUrl()}${DEFAULT_OG_IMAGE.url}`,
+              url: `${siteUrl()}${Route.Landing}`,
+              buttonTitle: "같이 제보하기",
+            }}
+          />
+        </li>
         {MENU.map(({ href, label, icon: Icon }) => (
           <li key={href}>
             <Link href={href} className="flex items-center gap-3 py-4">

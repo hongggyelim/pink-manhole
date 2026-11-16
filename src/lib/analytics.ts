@@ -6,6 +6,7 @@
  *  - take_photo     { method: "in_app_camera" | "device_camera", count }
  *  - select_photo   { count }
  *  - submit_report  { photo_count, has_memo, location_source }
+ *  - share          { method: "kakao" | "system" | "copy" }  (GA recommended event)
  */
 type Params = Record<string, string | number | boolean>;
 
@@ -15,7 +16,7 @@ declare global {
   }
 }
 
-export function trackEvent(name: "take_photo" | "select_photo" | "submit_report", params?: Params) {
+export function trackEvent(name: "take_photo" | "select_photo" | "submit_report" | "share", params?: Params) {
   try {
     window.gtag?.("event", name, params);
   } catch {
