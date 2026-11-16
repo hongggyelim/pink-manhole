@@ -35,6 +35,9 @@ function filterParams(f: AdminListFilters, patch: Partial<Record<keyof AdminList
 export default function AdminHome({ searchParams }: PageProps<"/admin">) {
   return (
     <>
+      <Suspense>
+        <KakaoResult searchParams={searchParams} />
+      </Suspense>
       <Suspense fallback={<div className="h-24" />}>
         <Stats />
       </Suspense>
@@ -42,6 +45,19 @@ export default function AdminHome({ searchParams }: PageProps<"/admin">) {
         <ReportList searchParams={searchParams} />
       </Suspense>
     </>
+  );
+}
+
+/** One-off result of the Kakao connect flow (/admin?kakao=connected|failed). */
+async function KakaoResult({ searchParams }: { searchParams: SP }) {
+  const { kakao } = await searchParams;
+  if (kakao !== "connected" && kakao !== "failed") return null;
+  return (
+    <p className={cn("mb-4 rounded-lg px-4 py-3 text-sm", kakao === "connected" ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700")}>
+      {kakao === "connected"
+        ? "카카오톡 알림이 연결되었습니다. 나와의 채팅에서 테스트 메시지를 확인해 주세요."
+        : "카카오톡 알림 연결에 실패했습니다. 메시지 전송 동의 여부와 Kakao Developers 설정을 확인해 주세요."}
+    </p>
   );
 }
 

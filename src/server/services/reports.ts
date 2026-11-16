@@ -160,7 +160,7 @@ export async function createReport(input: CreateReportInput, meta: { ipHash: str
 
   // Idempotent retry: the draft already became a report.
   const { data: existing } = await admin.from("reports").select("report_no").eq("id", input.draftId).maybeSingle();
-  if (existing) return existing.report_no as string;
+  if (existing) return { reportNo: existing.report_no as string, created: false, address: null };
 
   const [photos, geo] = await Promise.all([
     processDraftPhotos(admin, input.draftId, input.photoCount),
@@ -184,5 +184,5 @@ export async function createReport(input: CreateReportInput, meta: { ipHash: str
 
   // Publish the blur previews (originals stay private until approved).
   await syncReportFiles(admin, input.draftId);
-  return data as string;
+  return { reportNo: data as string, created: true, address: geo.roadAddress ?? geo.address };
 }

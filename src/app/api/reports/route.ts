@@ -1,7 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
 import { createReportSchema } from "@/shared/schemas";
 import { clientIp, hashIp, isRateLimited } from "@/server/services/abuse";
 import { PhotoError } from "@/server/services/photo-files";
+import { notifyNewReport } from "@/server/services/kakao-notify";
 import { createReport } from "@/server/services/reports";
 
 export async function POST(req: NextRequest) {
@@ -14,10 +15,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "잠시 후 다시 시도해주세요." }, { status: 429 });
   }
   try {
-    const reportNo = await createReport(parsed.data, {
+    const { reportNo, created, address } = await createReport(parsed.data, {
       ipHash,
       userAgent: req.headers.get("user-agent") ?? "",
     });
+    // KakaoTalk alert to the admin after the response is sent; skipped on idempotent retries.
+    if (created) {
+      after(() => notifyNewReport({ id: parsed.data.draftId, reportNo, address, memo: parsed.data.memo }));
+    }
     return NextResponse.json({ reportNo }, { status: 201 });
   } catch (e) {
     if (e instanceof PhotoError) {

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { keepKakaoTokenAlive } from "@/server/services/kakao-notify";
 import { UPLOAD_BUCKET } from "@/shared/constants";
 
 /** Drafts older than this that never became a report are deleted (signed upload URLs live 2h). */
@@ -10,6 +11,7 @@ const PAGE = 1000;
  * Daily maintenance (Vercel Cron, vercel.json). System job, so it uses the secret-key client.
  *  - deletes orphan upload drafts (files in report-uploads whose draftId never became a report)
  *  - purge_expired_data(): old rate-limit hits, 90-day wipe of IP hash / User-Agent
+ *  - refreshes the admin's Kakao token so the KakaoTalk alert connection never expires
  * Vercel sends `Authorization: Bearer $CRON_SECRET`; without CRON_SECRET the job refuses to run.
  */
 export async function GET(req: NextRequest) {
@@ -56,7 +58,9 @@ export async function GET(req: NextRequest) {
   const { data: purged, error: purgeError } = await admin.rpc("purge_expired_data");
   if (purgeError) throw purgeError;
 
-  const result = { removedDrafts, removedFiles, ...(purged as object) };
+  const kakaoToken = await keepKakaoTokenAlive();
+
+  const result = { removedDrafts, removedFiles, ...(purged as object), kakaoToken };
   console.log("[cron/cleanup]", result);
   return NextResponse.json(result);
 }

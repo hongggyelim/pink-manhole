@@ -28,6 +28,10 @@ export enum Route {
   /** Base of the admin report pages — build them with `routes.adminReport()`. */
   AdminReports = "/admin/reports",
   AdminExport = "/admin/export",
+  /** Starts the Kakao OAuth flow for new-report KakaoTalk alerts (route handler). */
+  AdminKakaoConnect = "/admin/kakao/connect",
+  /** Kakao OAuth redirect URI — must also be registered in Kakao Developers. */
+  AdminKakaoCallback = "/admin/kakao/callback",
 }
 
 export enum ApiRoute {

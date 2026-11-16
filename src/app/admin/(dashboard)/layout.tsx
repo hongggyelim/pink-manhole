@@ -1,10 +1,11 @@
-import { LogOut } from "lucide-react";
+import { LogOut, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminNavLink } from "@/features/admin/admin-nav";
 import { signOut } from "@/server/admin-actions";
 import { requireAdminPage } from "@/server/auth";
 import { getAdminStats } from "@/server/services/admin";
+import { getKakaoNotifyStatus } from "@/server/services/kakao-notify";
 import { Route } from "@/shared/routes";
 
 export default function AdminDashboardLayout({ children }: LayoutProps<"/admin">) {
@@ -24,6 +25,9 @@ export default function AdminDashboardLayout({ children }: LayoutProps<"/admin">
             </NavLink>
           </nav>
           <div className="flex-1" />
+          <Suspense>
+            <KakaoNotifyLink />
+          </Suspense>
           <Suspense>
             <AdminEmail />
           </Suspense>
@@ -59,6 +63,22 @@ async function PendingBadge() {
   const { pendingPhotos } = await getAdminStats(supabase);
   if (!pendingPhotos) return null;
   return <span className="rounded-full bg-primary px-1.5 text-xs font-bold text-white">{pendingPhotos}</span>;
+}
+
+/** KakaoTalk new-report alert status; clicking (re)connects via Kakao OAuth (route handler, so a plain <a>). */
+async function KakaoNotifyLink() {
+  const { supabase } = await requireAdminPage();
+  const { connected } = await getKakaoNotifyStatus(supabase);
+  return (
+    <a
+      href={Route.AdminKakaoConnect}
+      title={connected ? "새 제보 카카오톡 알림 켜짐 (누르면 다시 연결)" : "새 제보를 카카오톡으로 받기"}
+      className="flex items-center gap-1 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-muted sm:px-3"
+    >
+      <MessageCircle className={connected ? "size-4 fill-[#FEE500] text-[#3C1E1E]" : "size-4"} />
+      <span className="hidden sm:inline">{connected ? "카톡 알림 ON" : "카톡 알림 연결"}</span>
+    </a>
+  );
 }
 
 async function AdminEmail() {
