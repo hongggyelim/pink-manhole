@@ -12,7 +12,7 @@ import { ReportDetailMap } from "@/features/reports/report-detail-map";
 import { StatusBadge } from "@/features/reports/report-list-item";
 import { countNearby, getReportByNo } from "@/server/services/reports";
 import { formatDate } from "@/shared/format";
-import { photoUrl, publicPhoto } from "@/shared/photo";
+import { photoUrl, PRIVATE_PHOTO_PLACEHOLDER, publicPhoto } from "@/shared/photo";
 import { reportNoSchema } from "@/shared/schemas";
 
 export async function generateMetadata({ params }: PageProps<"/reports/[reportNo]">): Promise<Metadata> {
@@ -68,6 +68,12 @@ async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["pa
       <ReportDetailMap id={report.id} reportNo={report.report_no} lat={report.lat} lng={report.lng} />
 
       <div className="grid grid-cols-3 gap-2 px-4 pt-4">
+        {report.report_photos.length === 0 && (
+          // Every photo was made private (RLS hides them): placeholder instead of an empty grid.
+          <div className="aspect-square overflow-hidden rounded-xl bg-muted">
+            <img src={PRIVATE_PHOTO_PLACEHOLDER} alt="비공개 처리된 사진" className="size-full object-cover" />
+          </div>
+        )}
         {report.report_photos.map((p, i) => {
           const photo = publicPhoto(p);
           const img = photo.thumb && (

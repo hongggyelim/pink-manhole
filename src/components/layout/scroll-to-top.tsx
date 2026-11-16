@@ -20,9 +20,12 @@ const SHOW_AFTER_PX = 56;
  * in the same spot on home, report, stats and more.
  */
 const RAISED_PAGES = [Route.Home, Route.Report, Route.Stats, Route.More];
+/** Fade out again after this long without scrolling. */
+const IDLE_HIDE_MS = 3000;
 
 /**
- * Floating "back to top" button. Fades/slides in after scrolling down and sits above
+ * Floating "back to top" button. Fades/slides in while scrolling down the page, fades out after
+ * IDLE_HIDE_MS without scrolling (or back near the top), and sits above
  * whatever is fixed at the bottom of the current page (tab bar, report submit bar).
  */
 export function ScrollToTop() {
@@ -34,10 +37,19 @@ export function ScrollToTop() {
     if (excluded) return;
     // Plain scroll handler: setState bails out when the boolean is unchanged, so this is
     // cheap, and unlike requestAnimationFrame it never stalls in throttled frames/iframes.
-    const update = () => setVisible(window.scrollY > SHOW_AFTER_PX);
+    let idle: ReturnType<typeof setTimeout> | undefined;
+    const update = () => {
+      clearTimeout(idle);
+      const scrolled = window.scrollY > SHOW_AFTER_PX;
+      setVisible(scrolled);
+      if (scrolled) idle = setTimeout(() => setVisible(false), IDLE_HIDE_MS);
+    };
     update();
     window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
+    return () => {
+      clearTimeout(idle);
+      window.removeEventListener("scroll", update);
+    };
   }, [excluded, pathname]);
 
   if (excluded) return null;

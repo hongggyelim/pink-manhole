@@ -14,6 +14,12 @@ export function photoPaths(draftId: string, index: number) {
   };
 }
 
+/**
+ * Static stand-in (pink manhole on gray) for a report whose photos are all 비공개 (private).
+ * RLS hides private photos, so on the public side such a report has an empty `report_photos`.
+ */
+export const PRIVATE_PHOTO_PLACEHOLDER = "/images/photo-private.webp";
+
 /** What the public may see for a photo: the real image once approved, otherwise the blur preview. */
 export function publicPhoto(p: ReportPhoto) {
   if (p.moderation_status === "approved") {
