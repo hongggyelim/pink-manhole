@@ -4,20 +4,18 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { REPORT_STATUSES } from "@/shared/constants";
 import { formatDate } from "@/shared/format";
-import { PRIVATE_PHOTO_PLACEHOLDER, publicPhoto } from "@/shared/photo";
+import { publicPhoto } from "@/shared/photo";
 import type { PublicReport } from "@/shared/types";
 
 export function ReportListItem({ report }: { report: PublicReport }) {
   const first = report.report_photos[0];
   const photo = first ? publicPhoto(first) : null;
-  // No visible photo = every photo was made private: show the placeholder, not an empty box.
-  const src = photo ? photo.thumb : PRIVATE_PHOTO_PLACEHOLDER;
   return (
     <Link href={routes.reportDetail(report.report_no)} className="flex items-center gap-3 py-3">
-      <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-        {src && <img src={src} alt="" className="size-full object-cover" loading="lazy" />}
-        {photo?.blurred && (
-          <span className="absolute inset-x-0 bottom-0 bg-black/45 py-0.5 text-center text-[10px] text-white">검토중</span>
+      <div className={cn("relative size-16 shrink-0 overflow-hidden rounded-xl", !photo?.hidden && "bg-muted")}>
+        {photo && <img src={photo.thumb} alt="" className="size-full object-cover" loading="lazy" />}
+        {photo?.hidden && (
+          <span className="absolute inset-x-0 bottom-0 bg-black/45 py-0.5 text-center text-[10px] text-white">{photo.label}</span>
         )}
       </div>
       <div className="min-w-0 flex-1">

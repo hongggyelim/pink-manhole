@@ -3,7 +3,7 @@ export const MAX_PHOTOS = 3;
 export const PHOTO_INPUT_MAX_BYTES = 10 * 1024 * 1024;
 /** Target size of the compressed upload. */
 export const PHOTO_MAX_BYTES = 2 * 1024 * 1024;
-/** Public bucket: only blur previews of pending photos + approved photos of visible reports. */
+/** Public bucket: only approved photos of visible reports. */
 export const PHOTO_BUCKET = "report-photos";
 /** Private bucket: originals and everything not currently allowed to be public. */
 export const UPLOAD_BUCKET = "report-uploads";

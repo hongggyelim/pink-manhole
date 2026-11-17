@@ -8,7 +8,7 @@ import { photoPaths } from "@/shared/photo";
 import type { CreateReportInput } from "@/shared/schemas";
 import type { MapPoint, PublicReport } from "@/shared/types";
 import { reverseGeocode } from "./geocode";
-import { processDraftPhotos, syncReportFiles } from "./photo-files";
+import { processDraftPhotos } from "./photo-files";
 
 /* ── Public reads (always fresh; RLS hides hidden/deleted reports + private photos) ── */
 
@@ -182,7 +182,6 @@ export async function createReport(input: CreateReportInput, meta: { ipHash: str
   });
   if (error) throw error;
 
-  // Publish the blur previews (originals stay private until approved).
-  await syncReportFiles(admin, input.draftId);
+  // No file moves: new photos are pending, so everything stays in the private bucket until approved.
   return { reportNo: data as string, created: true, address: geo.roadAddress ?? geo.address };
 }

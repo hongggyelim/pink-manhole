@@ -12,7 +12,7 @@ import { ReportDetailMap } from "@/features/reports/report-detail-map";
 import { StatusBadge } from "@/features/reports/report-list-item";
 import { countNearby, getReportByNo } from "@/server/services/reports";
 import { formatDate } from "@/shared/format";
-import { photoUrl, PRIVATE_PHOTO_PLACEHOLDER, publicPhoto } from "@/shared/photo";
+import { photoUrl, publicPhoto } from "@/shared/photo";
 import { reportNoSchema } from "@/shared/schemas";
 
 export async function generateMetadata({ params }: PageProps<"/reports/[reportNo]">): Promise<Metadata> {
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps<"/reports/[reportNo
 
   const address = report.road_address ?? report.address;
   // Share card: the approved photo when there is one; otherwise the default card
-  // (never the blur preview — it would look like a broken image in a chat preview).
+  // (never the placeholder tile).
   const approved = report.report_photos.find((p) => p.moderation_status === "approved");
   const description = [
     `${REPORT_STATUSES[report.status]} · ${formatDate(report.created_at)} 제보`,
@@ -68,27 +68,25 @@ async function Detail({ params }: { params: PageProps<"/reports/[reportNo]">["pa
       <ReportDetailMap id={report.id} reportNo={report.report_no} lat={report.lat} lng={report.lng} />
 
       <div className="grid grid-cols-3 gap-2 px-4 pt-4">
-        {report.report_photos.length === 0 && (
-          // Every photo was made private (RLS hides them): placeholder instead of an empty grid.
-          <div className="aspect-square overflow-hidden rounded-xl bg-muted">
-            <img src={PRIVATE_PHOTO_PLACEHOLDER} alt="비공개 처리된 사진" className="size-full object-cover" />
-          </div>
-        )}
         {report.report_photos.map((p, i) => {
           const photo = publicPhoto(p);
-          const img = photo.thumb && (
-            <img src={photo.thumb} alt={`제보 사진 ${i + 1}`} className="size-full object-cover" />
+          const img = (
+            <img
+              src={photo.thumb}
+              alt={photo.hidden ? `${photo.label} 사진 ${i + 1}` : `제보 사진 ${i + 1}`}
+              className="size-full object-cover"
+            />
           );
-          return photo.full ? (
+          return !photo.hidden ? (
             <a key={p.id} href={photo.full} target="_blank" rel="noreferrer"
               className="aspect-square overflow-hidden rounded-xl bg-muted">
               {img}
             </a>
           ) : (
-            <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+            <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl">
               {img}
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white [text-shadow:0_1px_3px_rgba(0,0,0,.6)]">
-                검토 중
+              <span className="absolute inset-x-0 bottom-0 bg-black/45 py-1 text-center text-xs font-semibold text-white">
+                {photo.label}
               </span>
             </div>
           );

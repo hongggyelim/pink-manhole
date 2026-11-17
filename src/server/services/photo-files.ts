@@ -25,31 +25,33 @@ export async function processUploadedPhoto(input: Buffer) {
   if (!meta.format || !ALLOWED_FORMATS.has(meta.format)) {
     throw new PhotoError("JPG, PNG, WebP 사진만 올릴 수 있어요.");
   }
-  // The three encodes run in parallel on libvips' thread pool. Plain libjpeg (no mozjpeg):
-  // mozjpeg was ~4x slower for a few % smaller files.
+  // Both encodes run in parallel on libvips' thread pool. Plain libjpeg (no mozjpeg):
+  // mozjpeg was ~4x slower for a few % smaller files. No blur preview any more: the public
+  // sees a static placeholder tile until a photo is approved.
   const base = () => sharp(input, { limitInputPixels: MAX_INPUT_PIXELS }).rotate();
-  const [{ data: full, info }, thumb, blur] = await Promise.all([
+  const [{ data: full, info }, thumb] = await Promise.all([
     base()
       .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
       .jpeg({ quality: 82 })
       .toBuffer({ resolveWithObject: true }),
     base().resize(400, 400, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 75 }).toBuffer(),
-    // Tiny downscale first so nothing recognisable survives, then upscale + blur.
-    base().resize(24).resize(400).blur(12).jpeg({ quality: 60 }).toBuffer(),
   ]);
-  return { full, thumb, blur, width: info.width, height: info.height };
+  return { full, thumb, width: info.width, height: info.height };
 }
 
 type FileKind = "full" | "thumb" | "blur";
 
-/** Which bucket each file of a photo should live in, given moderation + report visibility. */
+/**
+ * Which bucket each file of a photo should live in, given moderation + report visibility.
+ * Only approved photos of visible reports are public; everything else (incl. legacy blur
+ * previews) stays private. Nothing is ever deleted, so a photo can go 공개 ↔ 비공개 any time.
+ */
 export function desiredBuckets(moderation: PhotoModeration, reportVisible: boolean): Record<FileKind, string> {
   const showReal = reportVisible && moderation === "approved";
-  const showBlur = reportVisible && moderation === "pending";
   return {
     full: showReal ? PHOTO_BUCKET : UPLOAD_BUCKET,
     thumb: showReal ? PHOTO_BUCKET : UPLOAD_BUCKET,
-    blur: showBlur ? PHOTO_BUCKET : UPLOAD_BUCKET,
+    blur: UPLOAD_BUCKET,
   };
 }
 
@@ -102,14 +104,13 @@ export async function processDraftPhotos(admin: SupabaseClient, draftId: string,
       const uploads = await Promise.all([
         storage.upload(paths.full, processed.full, { contentType: "image/jpeg", upsert: true }),
         storage.upload(paths.thumb, processed.thumb, { contentType: "image/jpeg", upsert: true }),
-        storage.upload(paths.blur, processed.blur, { contentType: "image/jpeg", upsert: true }),
       ]);
       const failed = uploads.find((u) => u.error);
       if (failed?.error) throw failed.error;
       return {
         storage_path: paths.full,
         thumb_path: paths.thumb,
-        blur_path: paths.blur,
+        blur_path: null,
         width: processed.width,
         height: processed.height,
       };
