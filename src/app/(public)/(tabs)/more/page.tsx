@@ -52,7 +52,7 @@ export default function MorePage() {
       </Link>
       <ul className="mt-4 mb-6 divide-y">
         <li>
-          {/* Absolute URLs built on the server: siteUrl() falls back to Vercel's production domain. */}
+          {/* Absolute URLs built on the server: siteUrl() always resolves to the production site, even in local dev. */}
           <KakaoShareButton
             card={{
               title: "분홍 맨홀을 발견하셨나요?",

@@ -6,13 +6,16 @@ export const SITE_DESCRIPTION = "전국의 분홍 맨홀을 찾아 제보해주�
 
 /**
  * Absolute site origin, used as `metadataBase` so og:image / og:url become absolute URLs
- * (KakaoTalk, Slack etc. ignore relative ones). Order: explicit env → Vercel production
- * domain (set automatically on Vercel) → local dev.
+ * (KakaoTalk, Slack etc. ignore relative ones), and for share links. Order: explicit env → Vercel
+ * production domain (set automatically on Vercel) → the production URL. Never localhost: links
+ * shared or sent from a local dev server must still open the real site.
  */
+export const PRODUCTION_SITE_URL = "https://pink-manhole.vercel.app";
+
 export function siteUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  return "http://localhost:3000";
+  return PRODUCTION_SITE_URL;
 }
 
 /**
