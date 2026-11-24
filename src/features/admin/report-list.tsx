@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Download, MoreHorizontal } from "lucide-react";
+import { ChevronDown, Download, FileArchive, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { runReportAction, type ReportAction } from "@/server/admin-actions";
 import { REPORT_STATUSES } from "@/shared/constants";
 import { formatDate } from "@/shared/format";
-import { routes } from "@/shared/routes";
+import { Route, routes, withQuery } from "@/shared/routes";
 import type { AdminReport } from "@/shared/types";
 
 type Props = {
@@ -242,6 +242,16 @@ export function AdminReportList({ reports, thumbs, count, exportHref }: Props) {
               triggerClass="inline-flex h-9 items-center gap-1 rounded-lg border bg-white px-3 text-sm font-semibold hover:bg-muted disabled:opacity-50"
               trigger={pending ? "처리 중…" : <>일괄 처리 <ChevronDown className="size-4" /></>}
             />
+          )}
+          {selected.size > 0 && (
+            <a
+              href={withQuery(Route.AdminSafetyReport, { ids: [...selected].join(",") })}
+              download
+              title="선택한 제보의 안전신문고 신고문(.txt)과 승인된 사진을 zip으로 받아요"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border bg-white px-3 text-sm font-medium hover:bg-muted"
+            >
+              <FileArchive className="size-4" /> 안전신문고 파일
+            </a>
           )}
           <a
             href={exportHref}

@@ -110,6 +110,18 @@ export function parseAdminFilters(sp: Record<string, string | string[] | undefin
   return { view, status, sido, q: str(sp.q)?.trim() || undefined, page };
 }
 
+/** Reports by id (any visibility), photos in upload order. */
+export async function getAdminReportsByIds(db: SupabaseClient, ids: string[]) {
+  const { data, error } = await db
+    .from("reports")
+    .select(ADMIN_COLUMNS)
+    .in("id", ids)
+    .order("created_at", { ascending: true })
+    .order("sort_order", { referencedTable: "report_photos" });
+  if (error) throw error;
+  return data as unknown as AdminReport[];
+}
+
 export async function getAdminReport(db: SupabaseClient, id: string) {
   const [{ data: report, error }, { data: logs, error: logError }] = await Promise.all([
     db.from("reports").select(ADMIN_COLUMNS).eq("id", id).order("sort_order", { referencedTable: "report_photos" }).maybeSingle(),

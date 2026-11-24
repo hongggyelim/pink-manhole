@@ -27,6 +27,8 @@ export enum Route {
   /** Base of the admin report pages — build them with `routes.adminReport()`. */
   AdminReports = "/admin/reports",
   AdminExport = "/admin/export",
+  /** Zip of 안전신문고 report text + approved photos for the selected reports (`?ids=a,b`). */
+  AdminSafetyReport = "/admin/safety-report",
   /** Starts the Kakao OAuth flow for new-report KakaoTalk alerts (route handler). */
   AdminKakaoConnect = "/admin/kakao/connect",
   /** Kakao OAuth redirect URI — must also be registered in Kakao Developers. */
