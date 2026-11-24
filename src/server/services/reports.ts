@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -23,6 +24,19 @@ export const getMapPoints = cache(async (): Promise<MapPoint[]> => {
   if (error) throw error;
   return data.map((r) => ({ id: r.id, reportNo: r.report_no, lat: r.lat, lng: r.lng, sido: r.sido }));
 });
+
+/** Public report numbers + dates for the sitemap; cached for an hour (no request data needed). */
+export async function getSitemapReports() {
+  "use cache";
+  cacheLife("hours");
+  const { data, error } = await createPublicClient()
+    .from("reports")
+    .select("report_no, created_at")
+    .order("created_at", { ascending: false })
+    .limit(5000);
+  if (error) throw error;
+  return data as { report_no: string; created_at: string }[];
+}
 
 export async function getTotalCount(sido?: string) {
   await connection();

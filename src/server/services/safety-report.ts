@@ -13,7 +13,7 @@ import { desiredBuckets } from "./photo-files";
  */
 
 const SERVICE_INTRO =
-  "분홍 맨홀은 시민들이 발견한 분홍색 콘크리트 맨홀의 위치와 사진을 모아 위험성을 알리는 시민 제보 서비스입니다.";
+  "find pink manhole 사이트는 시민들이 발견한 분홍색 콘크리트 맨홀의 위치와 사진을 모아 위험성을 알리는 시민 제보 서비스입니다.";
 
 const kstLong = (iso: string) =>
   new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "long", timeStyle: "short" }).format(new Date(iso));
@@ -68,7 +68,7 @@ export function safetyReportText(r: AdminReport) {
     "",
     "■ 참고",
     SERVICE_INTRO,
-    `분홍 맨홀 제보 번호: ${r.report_no}`,
+    `find pink manhole 제보 번호: ${r.report_no}`,
     `제보 일시: ${kstLong(r.created_at)}`,
     ...(visible ? [`제보 페이지: ${siteUrl()}${routes.reportDetail(r.report_no)}`] : []),
     "",

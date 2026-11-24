@@ -1,8 +1,22 @@
 import type { Metadata } from "next";
 import { Route } from "./routes";
 
-export const SITE_NAME = "분홍 맨홀";
-export const SITE_DESCRIPTION = "전국의 분홍 맨홀을 찾아 제보해주세요. 당신의 제보가 더 안전한 일상을 만듭니다.";
+/** Site title (browser tab, share cards). The Korean service name in page copy stays "분홍 맨홀". */
+export const SITE_NAME = "find pink manhole";
+/** Home / default title: the site name plus the Korean search terms people actually type. */
+export const SITE_TITLE = `${SITE_NAME} — 분홍 맨홀·핑크 맨홀 시민 제보 지도`;
+export const SITE_DESCRIPTION =
+  "분홍 맨홀(핑크 맨홀)을 발견하면 사진과 위치로 제보해 주세요. 시민 제보로 전국의 분홍색 콘크리트 맨홀 지도를 만들어 공공 안전을 지킵니다.";
+
+/**
+ * Search terms for the `keywords` meta tag (Naver and Daum still read it; Google ignores it).
+ * Spelling variants without a space are deliberate here: people search both ways. Not user-facing copy.
+ */
+export const SITE_KEYWORDS = [
+  "분홍 맨홀", "분홍맨홀", "핑크 맨홀", "핑크맨홀", "분홍색 맨홀", "핑크색 맨홀", "조화 맨홀", "콘크리트 맨홀",
+  "맨홀 뚜껑", "맨홀 사고", "맨홀 추락", "맨홀 신고", "공공안전", "공공 안전", "보행 안전", "생활 안전",
+  "시민 제보", "시민제보", "안전 제보", "안전신문고", "pink manhole", "find pink manhole",
+];
 
 /**
  * Absolute site origin, used as `metadataBase` so og:image / og:url become absolute URLs
@@ -43,13 +57,13 @@ export function pageMetadata({
   path,
   images = [DEFAULT_OG_IMAGE],
 }: {
-  /** Page title without the site name (the layout template adds " · 분홍 맨홀"). Omit for the site default. */
+  /** Page title without the site name (the layout template adds " · find pink manhole"). Omit for the site default. */
   title?: string;
   description?: string;
   path: string;
   images?: OgImage[];
 }): Metadata {
-  const fullTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
+  const fullTitle = title ? `${title} · ${SITE_NAME}` : SITE_TITLE;
   return {
     ...(title ? { title } : {}),
     description,
@@ -76,8 +90,32 @@ export function pageMetadata({
 export function rootMetadata(): Metadata {
   return {
     metadataBase: new URL(siteUrl()),
-    title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+    title: { default: SITE_TITLE, template: `%s · ${SITE_NAME}` },
     applicationName: SITE_NAME,
+    keywords: SITE_KEYWORDS,
+    category: "public safety",
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
+    // Search Console / Naver Search Advisor ownership tags; set the env vars after registering the site.
+    verification: {
+      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+      other: process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION
+        ? { "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION }
+        : undefined,
+    },
     ...pageMetadata({ path: Route.Landing }),
+  };
+}
+
+/** schema.org WebSite for the landing page, so search engines know the Korean names too. */
+export function websiteJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    alternateName: ["분홍 맨홀", "핑크 맨홀", "Pink Manhole"],
+    url: siteUrl(),
+    description: SITE_DESCRIPTION,
+    inLanguage: "ko-KR",
+    keywords: SITE_KEYWORDS.join(", "),
   };
 }

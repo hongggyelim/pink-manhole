@@ -1,5 +1,6 @@
 import { LandingScene } from "@/components/layout/landing-scene";
 import { Route } from "@/shared/routes";
+import { websiteJsonLd } from "@/shared/seo";
 import { Camera, ChevronRight, MapPin } from "lucide-react";
 import Link from "next/link";
 
@@ -8,6 +9,7 @@ export default function LandingPage() {
     // Exactly one screen tall: the illustration absorbs whatever height is left.
     // Short screens (≤700px, e.g. iPhone SE) get tighter spacing and buttons.
     <main className="relative flex h-dvh flex-col overflow-hidden bg-gradient-to-b from-[#3a3a3f] via-[#4a4648] to-[#2b2a2e] px-6 pt-[max(3.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))] text-white [@media(max-height:700px)]:pt-[max(2rem,env(safe-area-inset-top))] [@media(max-height:700px)]:pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd()).replace(/</g, "\\u003c") }} />
       <h1 className="shrink-0 break-keep text-[32px] leading-tight font-extrabold [@media(max-height:700px)]:text-[28px]">
         전국의{" "}
         <MapPin className="inline size-9 -translate-y-1 fill-primary text-primary [&>circle]:fill-[#3a3a3f] [&>circle]:stroke-[#3a3a3f]" />
