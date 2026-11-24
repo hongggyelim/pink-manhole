@@ -7,8 +7,9 @@ import type { AdminReport } from "@/shared/types";
 import { desiredBuckets } from "./photo-files";
 
 /**
- * 안전신문고 report kit: per report a ready-to-paste .txt plus its approved photos,
- * zipped. The admin files the report by hand; nothing here changes report status.
+ * 안전신문고 report kit, zipped: ready-to-paste text (one .txt per 동, reports in the same
+ * 동 separated by a line) plus each report's reviewed photos (승인 and 비공개; not ones still
+ * pending). The admin files the report by hand; nothing here changes report status.
  */
 
 const SERVICE_INTRO =
@@ -28,19 +29,25 @@ export function areaUpToDong(r: Pick<AdminReport, "address" | "sido" | "sigungu"
   return [r.sido, r.sigungu].filter(Boolean).join(" ");
 }
 
-/** "[안전신문고 신고] PM-261103-7K3Q 서울특별시 마포구 서교동" (no extension). */
-export function safetyReportName(r: AdminReport) {
-  return safeName(`[안전신문고 신고] ${r.report_no} ${areaUpToDong(r)}`);
+/**
+ * File name (no extension) for the reports of one 동: "[안전신문고 신고] PM-261103-7K3Q 서울특별시 마포구 서교동"
+ * for one report, "[안전신문고 신고] 서울특별시 마포구 서교동 3건" for several.
+ */
+export function safetyReportName(area: string, reports: Pick<AdminReport, "report_no">[]) {
+  return safeName(
+    reports.length === 1 ? `[안전신문고 신고] ${reports[0].report_no} ${area}` : `[안전신문고 신고] ${area} ${reports.length}건`,
+  );
 }
 
-const approvedPhotos = (r: AdminReport) => r.report_photos.filter((p) => p.moderation_status === "approved");
-const photoFileName = (i: number) => `사진${i + 1}.jpg`;
+const SEPARATOR = "━".repeat(36);
+
+const reviewedPhotos = (r: AdminReport) => r.report_photos.filter((p) => p.moderation_status !== "pending");
+const photoFileName = (r: Pick<AdminReport, "report_no">, i: number) => `${r.report_no}_사진${i + 1}.jpg`;
 
 export function safetyReportText(r: AdminReport) {
   const road = r.road_address;
   const jibun = r.address;
   const place = road ?? jibun ?? "주소 없음";
-  const photos = approvedPhotos(r);
   const visible = !r.is_hidden && !r.deleted_at;
 
   const lines = [
@@ -60,11 +67,6 @@ export function safetyReportText(r: AdminReport) {
     "현장 점검 후 필요하면 안전한 덮개로 교체해 주시기 바랍니다.",
     ...(r.memo?.trim() ? ["", `시민 메모: ${r.memo.trim().replace(/\s*\n\s*/g, " ")}`] : []),
     "",
-    "■ 첨부 사진",
-    ...(photos.length
-      ? [`승인된 사진 ${photos.length}장 (안전신문고에 직접 첨부해 주세요)`, ...photos.map((_, i) => `- ${photoFileName(i)}`)]
-      : ["승인된 사진 없음"]),
-    "",
     "■ 참고",
     SERVICE_INTRO,
     `분홍 맨홀 제보 번호: ${r.report_no}`,
@@ -75,36 +77,47 @@ export function safetyReportText(r: AdminReport) {
   return lines.join("\n");
 }
 
-/** Approved photo files (full size), read with the admin's session from whichever bucket holds them. */
-async function downloadApprovedPhotos(db: SupabaseClient, r: AdminReport) {
+/** Reviewed photo files (full size), read with the admin's session from whichever bucket holds each one. */
+async function downloadReviewedPhotos(db: SupabaseClient, r: AdminReport) {
   const visible = !r.is_hidden && !r.deleted_at;
-  const bucket = desiredBuckets("approved", visible).full;
   return Promise.all(
-    approvedPhotos(r).map(async (p, i) => {
+    reviewedPhotos(r).map(async (p, i) => {
+      const bucket = desiredBuckets(p.moderation_status, visible).full;
       const { data, error } = await db.storage.from(bucket).download(p.storage_path);
       if (error) throw error;
-      return [photoFileName(i), new Uint8Array(await data.arrayBuffer())] as const;
+      return [photoFileName(r, i), new Uint8Array(await data.arrayBuffer())] as const;
     }),
   );
 }
 
 /**
- * One report → its files at the zip root. Several → one folder per report.
+ * Reports are grouped by 동: each group is one .txt (reports separated by a line) plus the
+ * photos of its reports. One group → its files at the zip root; several → one folder per group.
  * Photos are already JPEG, so they are stored without compression.
  */
 export async function buildSafetyReportZip(db: SupabaseClient, reports: AdminReport[]) {
-  const single = reports.length === 1;
-  const tree: Zippable = {};
+  const groups = new Map<string, AdminReport[]>();
   for (const r of reports) {
-    const name = safetyReportName(r);
-    const files: Zippable = { [`${name}.txt`]: strToU8(safetyReportText(r)) };
-    for (const [file, bytes] of await downloadApprovedPhotos(db, r)) files[file] = [bytes, { level: 0 }];
-    if (single) Object.assign(tree, files);
+    const area = areaUpToDong(r);
+    groups.set(area, [...(groups.get(area) ?? []), r]);
+  }
+
+  const tree: Zippable = {};
+  for (const [area, group] of groups) {
+    const name = safetyReportName(area, group);
+    const text = group.map(safetyReportText).join(`\n${SEPARATOR}\n\n`);
+    const files: Zippable = { [`${name}.txt`]: strToU8(text) };
+    for (const r of group) {
+      for (const [file, bytes] of await downloadReviewedPhotos(db, r)) files[file] = [bytes, { level: 0 }];
+    }
+    if (groups.size === 1) Object.assign(tree, files);
     else tree[name] = files;
   }
+
   const stamp = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" })
     .format(new Date())
     .replaceAll("-", "");
-  const zipName = single ? safetyReportName(reports[0]) : `[안전신문고 신고] ${reports.length}건 ${stamp}`;
+  const [[area, group]] = groups;
+  const zipName = groups.size === 1 ? safetyReportName(area, group) : `[안전신문고 신고] ${reports.length}건 ${stamp}`;
   return { zip: zipSync(tree), zipName: `${zipName}.zip` };
 }
