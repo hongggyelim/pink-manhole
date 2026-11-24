@@ -8,8 +8,8 @@ import { desiredBuckets } from "./photo-files";
 
 /**
  * 안전신문고 report kit, zipped: ready-to-paste text (one .txt per 동, reports in the same
- * 동 separated by a line) plus each report's reviewed photos (승인 and 비공개; not ones still
- * pending). The admin files the report by hand; nothing here changes report status.
+ * 동 separated by a line) plus every photo of each report (승인, 비공개 and 검토 대기).
+ * The admin files the report by hand; nothing here changes report status.
  */
 
 const SERVICE_INTRO =
@@ -41,7 +41,6 @@ export function safetyReportName(area: string, reports: Pick<AdminReport, "repor
 
 const SEPARATOR = "━".repeat(36);
 
-const reviewedPhotos = (r: AdminReport) => r.report_photos.filter((p) => p.moderation_status !== "pending");
 const photoFileName = (r: Pick<AdminReport, "report_no">, i: number) => `${r.report_no}_사진${i + 1}.jpg`;
 
 export function safetyReportText(r: AdminReport) {
@@ -77,11 +76,11 @@ export function safetyReportText(r: AdminReport) {
   return lines.join("\n");
 }
 
-/** Reviewed photo files (full size), read with the admin's session from whichever bucket holds each one. */
-async function downloadReviewedPhotos(db: SupabaseClient, r: AdminReport) {
+/** Every photo file (full size), read with the admin's session from whichever bucket holds each one. */
+async function downloadPhotos(db: SupabaseClient, r: AdminReport) {
   const visible = !r.is_hidden && !r.deleted_at;
   return Promise.all(
-    reviewedPhotos(r).map(async (p, i) => {
+    r.report_photos.map(async (p, i) => {
       const bucket = desiredBuckets(p.moderation_status, visible).full;
       const { data, error } = await db.storage.from(bucket).download(p.storage_path);
       if (error) throw error;
@@ -108,7 +107,7 @@ export async function buildSafetyReportZip(db: SupabaseClient, reports: AdminRep
     const text = group.map(safetyReportText).join(`\n${SEPARATOR}\n\n`);
     const files: Zippable = { [`${name}.txt`]: strToU8(text) };
     for (const r of group) {
-      for (const [file, bytes] of await downloadReviewedPhotos(db, r)) files[file] = [bytes, { level: 0 }];
+      for (const [file, bytes] of await downloadPhotos(db, r)) files[file] = [bytes, { level: 0 }];
     }
     if (groups.size === 1) Object.assign(tree, files);
     else tree[name] = files;
