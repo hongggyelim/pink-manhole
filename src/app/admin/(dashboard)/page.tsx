@@ -66,7 +66,7 @@ async function Stats() {
   const s = await getAdminStats(supabase);
   const cards = [
     { label: "전체 제보", value: s.total, href: Route.Admin },
-    { label: "사진 검토 대기", value: s.pendingPhotos, href: Route.AdminPhotos, accent: s.pendingPhotos > 0 },
+    { label: "사진 검토 대기", value: s.pendingPhotos, href: withQuery(Route.Admin, { status: "reviewing" }), accent: s.pendingPhotos > 0 },
     { label: "검토중 제보", value: s.reviewing, href: withQuery(Route.Admin, { status: "reviewing" }) },
     { label: "민원 접수", value: s.submitted, href: withQuery(Route.Admin, { status: "submitted" }) },
     { label: "비공개", value: s.hidden, href: withQuery(Route.Admin, { view: "hidden" }) },

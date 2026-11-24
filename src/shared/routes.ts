@@ -24,7 +24,6 @@ export enum Route {
   Admin = "/admin",
   AdminLogin = "/admin/login",
   AdminForbidden = "/admin/forbidden",
-  AdminPhotos = "/admin/photos",
   /** Base of the admin report pages — build them with `routes.adminReport()`. */
   AdminReports = "/admin/reports",
   AdminExport = "/admin/export",

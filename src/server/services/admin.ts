@@ -120,24 +120,6 @@ export async function getAdminReport(db: SupabaseClient, id: string) {
   return { report: report as unknown as AdminReport | null, logs: logs ?? [] };
 }
 
-export type PendingPhoto = ReportPhoto & {
-  report: Pick<AdminReport, "id" | "report_no" | "address" | "road_address" | "sido" | "sigungu" | "is_hidden" | "deleted_at" | "created_at">;
-};
-
-export async function getPendingPhotos(db: SupabaseClient, limit = 200) {
-  const { data, error } = await db
-    .from("report_photos")
-    .select(
-      "id, storage_path, thumb_path, blur_path, width, height, sort_order, moderation_status, created_at, report:reports!inner(id, report_no, address, road_address, sido, sigungu, is_hidden, deleted_at, created_at)",
-    )
-    .eq("moderation_status", "pending")
-    .is("reports.deleted_at", null)
-    .order("created_at", { ascending: true })
-    .limit(limit);
-  if (error) throw error;
-  return data as unknown as PendingPhoto[];
-}
-
 export type AdminPhotoUrls = { thumb: string; full: string };
 
 /**

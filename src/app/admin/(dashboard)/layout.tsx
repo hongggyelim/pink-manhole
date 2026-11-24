@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { AdminNavLink } from "@/features/admin/admin-nav";
 import { signOut } from "@/server/admin-actions";
 import { requireAdminPage } from "@/server/auth";
-import { getAdminStats } from "@/server/services/admin";
 import { getKakaoNotifyStatus } from "@/server/services/kakao-notify";
 import { Route } from "@/shared/routes";
 
@@ -17,12 +16,6 @@ export default function AdminDashboardLayout({ children }: LayoutProps<"/admin">
           {/* Mobile: nav drops to its own full-width row below the logo/logout row. */}
           <nav className="order-last -mx-1 flex w-full gap-1 pb-2 md:order-none md:mx-0 md:w-auto md:pb-0 [&>a]:flex-1 [&>a]:justify-center md:[&>a]:flex-none">
             <NavLink href={Route.Admin}>제보 목록</NavLink>
-            <NavLink href={Route.AdminPhotos}>
-              사진 검토
-              <Suspense>
-                <PendingBadge />
-              </Suspense>
-            </NavLink>
           </nav>
           <div className="flex-1" />
           <Suspense>
@@ -56,13 +49,6 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
       <AdminNavLink href={href}>{children}</AdminNavLink>
     </Suspense>
   );
-}
-
-async function PendingBadge() {
-  const { supabase } = await requireAdminPage();
-  const { pendingPhotos } = await getAdminStats(supabase);
-  if (!pendingPhotos) return null;
-  return <span className="rounded-full bg-primary px-1.5 text-xs font-bold text-white">{pendingPhotos}</span>;
 }
 
 /** KakaoTalk new-report alert status; clicking (re)connects via Kakao OAuth (route handler, so a plain <a>). */
