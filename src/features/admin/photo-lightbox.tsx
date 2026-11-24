@@ -1,7 +1,7 @@
 "use client";
 
 import { routes } from "@/shared/routes";
-import { ChevronLeft, ChevronRight, EyeOff, Check, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Lock, X, ZoomIn, ZoomOut } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
@@ -135,20 +135,20 @@ export function PhotoLightbox({ items, index, onIndexChange, onClose, onDecided 
       <div className="flex flex-col items-center gap-2 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <p className="max-w-full truncate text-xs text-white/60 sm:hidden">{item.address ?? "주소 없음"}</p>
         {error && <p className="text-sm text-red-300">{error}</p>}
-        <div className="flex w-full max-w-md gap-3">
+        <div className="flex items-center gap-4">
           {item.status !== "pending" && (
-            <button disabled={pending} onClick={() => decide("pending")}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-white/15 font-semibold hover:bg-white/25 disabled:opacity-50">
-              <RotateCcw className="size-5" /> 검토 취소 <kbd className="hidden text-xs text-white/50 sm:inline">U</kbd>
+            <button disabled={pending} onClick={() => decide("pending")} aria-label="검토 취소" title="검토 취소"
+              className="flex size-12 items-center justify-center rounded-full bg-white/15 hover:bg-white/25 disabled:opacity-50">
+              <X className="size-6" />
             </button>
           )}
-          <button disabled={pending || item.status === "private"} onClick={() => decide("private")}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-white/15 font-semibold hover:bg-white/25 disabled:opacity-50">
-            <EyeOff className="size-5" /> 비공개 <kbd className="hidden text-xs text-white/50 sm:inline">H</kbd>
+          <button disabled={pending || item.status === "private"} onClick={() => decide("private")} aria-label="비공개" title="비공개"
+            className="flex size-14 items-center justify-center rounded-full bg-white/15 hover:bg-white/25 disabled:opacity-50">
+            <Lock className="size-6" />
           </button>
-          <button disabled={pending || item.status === "approved"} onClick={() => decide("approved")}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-primary font-semibold hover:bg-primary/90 disabled:opacity-50">
-            <Check className="size-5" /> 승인 <kbd className="hidden text-xs text-white/60 sm:inline">A</kbd>
+          <button disabled={pending || item.status === "approved"} onClick={() => decide("approved")} aria-label="승인" title="승인"
+            className="flex size-14 items-center justify-center rounded-full bg-primary hover:bg-primary/90 disabled:opacity-50">
+            <Check className="size-7" />
           </button>
         </div>
       </div>

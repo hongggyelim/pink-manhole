@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, EyeOff, Hourglass, Loader2, ZoomIn } from "lucide-react";
+import { Check, Hourglass, Lock, Loader2, ZoomIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
@@ -53,7 +53,7 @@ export function ReportPhotos({ items: initial }: { items: ReportPhotoItem[] }) {
 const OPTIONS: { value: PhotoModeration; icon: typeof Check; active: string }[] = [
   { value: "pending", icon: Hourglass, active: "bg-amber-100 text-amber-800" },
   { value: "approved", icon: Check, active: "bg-emerald-600 text-white" },
-  { value: "private", icon: EyeOff, active: "bg-neutral-700 text-white" },
+  { value: "private", icon: Lock, active: "bg-neutral-700 text-white" },
 ];
 
 function ModerationToggle({
